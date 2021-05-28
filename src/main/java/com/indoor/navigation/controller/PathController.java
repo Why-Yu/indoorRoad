@@ -1,7 +1,7 @@
 package com.indoor.navigation.controller;
 
-import com.indoor.navigation.database.entity.IndoorRoad;
-import com.indoor.navigation.database.service.IndoorRoadService;
+import com.indoor.navigation.entity.IndoorRoad;
+import com.indoor.navigation.service.IndoorRoadService;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController

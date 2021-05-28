@@ -1,4 +1,4 @@
-package com.indoor.navigation.database.entity;
+package com.indoor.navigation.entity;
 
 import javax.persistence.*;
 

@@ -1,7 +1,7 @@
-package com.indoor.navigation.database.service;
+package com.indoor.navigation.service;
 
-import com.indoor.navigation.database.entity.IndoorRoad;
-import com.indoor.navigation.database.repo.IndoorRoadRepo;
+import com.indoor.navigation.entity.IndoorRoad;
+import com.indoor.navigation.repo.IndoorRoadRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
