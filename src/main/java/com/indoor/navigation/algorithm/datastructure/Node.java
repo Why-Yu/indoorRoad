@@ -12,7 +12,7 @@ public class Node implements Comparable<Node>{
      * x,y,floor(可替换为z):描述点的具体空间位置
      * total,gCost,heuristics:计算最短路径的f=g+h
      */
-    public int dataIndex;
+    public String dataIndex;
     public int arrayIndex;
 
     public Node parent;
@@ -45,7 +45,7 @@ public class Node implements Comparable<Node>{
 
     }
 
-    public Node(int dataIndex, int floor, double x, double y, double gCost){
+    public Node(String dataIndex, int floor, double x, double y, double gCost){
         this.dataIndex = dataIndex;
         this.floor = floor;
         this.x = x;

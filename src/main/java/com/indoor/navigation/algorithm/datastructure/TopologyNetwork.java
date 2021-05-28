@@ -1,6 +1,8 @@
 package com.indoor.navigation.algorithm.datastructure;
 
 import com.indoor.navigation.Interfaces.Graph;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,6 +13,8 @@ import java.util.Map;
  * 拓扑网络结构
  * 把对应数据库中的数据就转换成这个类
  */
+@Component
+@Scope("prototype")
 public class TopologyNetwork implements Graph {
 
     /**
@@ -21,17 +25,17 @@ public class TopologyNetwork implements Graph {
         dataIndexToVerticesIndex = new HashMap<>();
     }
 
-    private class Vertex{
+    public class Vertex{
 
         Vertex(){}
 
-        Vertex(int dataIndex, int floor, double x, double y){
+        Vertex(String dataIndex, int floor, double x, double y){
             this.dataIndex = dataIndex;
             this.floor = floor;
             this.x = x;
             this.y = y;
         }
-        int dataIndex;
+        String dataIndex;
         int floor;
         double x;
         double y;
@@ -51,11 +55,11 @@ public class TopologyNetwork implements Graph {
 
     private class NextNode{
 
-        NextNode(int dataIndex, double weight){
+        NextNode(String dataIndex, double weight){
             this.dataIndex = dataIndex;
             this.weight = weight;
         }
-        int dataIndex;
+        String dataIndex;
         double weight;
         NextNode nextNode;
 
@@ -70,10 +74,10 @@ public class TopologyNetwork implements Graph {
     }
 
     private List<Vertex> vertices;
-    private Map<Integer, Integer> dataIndexToVerticesIndex;
+    private Map<String, Integer> dataIndexToVerticesIndex;
 
     @Override
-    public void insertVertex(int dataIndex, int floor, double x, double y) {
+    public void insertVertex(String dataIndex, int floor, double x, double y) {
         if(!dataIndexToVerticesIndex.containsKey(dataIndex)){
             dataIndexToVerticesIndex.put(dataIndex, vertices.size());
             Vertex vertex = new Vertex(dataIndex, floor, x, y);
@@ -82,7 +86,7 @@ public class TopologyNetwork implements Graph {
     }
 
     @Override
-    public void deleteVertex(int dataIndex) {
+    public void deleteVertex(String dataIndex) {
         //在构建的时候其实是用不上的，但写着玩,但添加操作简单，删除操作一般都很麻烦
         if(dataIndexToVerticesIndex.containsKey(dataIndex)){
             int verticesIndex = dataIndexToVerticesIndex.get(dataIndex);
@@ -93,7 +97,7 @@ public class TopologyNetwork implements Graph {
             for(Vertex vertex : vertices){
                 NextNode nextNode = vertex.nextNode;
                 if(nextNode == null) continue;
-                if(nextNode.dataIndex == dataIndex && nextNode.nextNode == null){
+                if(nextNode.dataIndex.equals(dataIndex) && nextNode.nextNode == null){
                     vertex.nextNode = null;
                     continue;
                 }
@@ -102,7 +106,7 @@ public class TopologyNetwork implements Graph {
                 while (current != null){
                     previous = current;
                     current = current.nextNode;
-                    if(current.dataIndex == dataIndex){
+                    if(current.dataIndex.equals(dataIndex)){
                         previous.nextNode = current.nextNode;
                         break;
                     }
@@ -116,14 +120,14 @@ public class TopologyNetwork implements Graph {
     //不能插入环
     //代码简化，不再需要对nextNode是否为null做检查
     @Override
-    public void insertEdge(int dataIndex1, int dataIndex2, double weight) {
+    public void insertEdge(String dataIndex1, String dataIndex2, double weight) {
         if(dataIndexToVerticesIndex.containsKey(dataIndex1) &&
-        dataIndexToVerticesIndex.containsKey(dataIndex2) && dataIndex1 != dataIndex2){
+        dataIndexToVerticesIndex.containsKey(dataIndex2) && !dataIndex1.equals(dataIndex2)){
             //-----这一块测试之后删掉,功能是生成随机网络时，拒绝重复添加边
             int tempVerticesIndex = dataIndexToVerticesIndex.get(dataIndex1);
             NextNode tempNextNode = vertices.get(tempVerticesIndex).nextNode;
             while (tempNextNode != null){
-                if(tempNextNode.dataIndex == dataIndex2) return;
+                if(tempNextNode.dataIndex.equals(dataIndex2)) return;
                 tempNextNode = tempNextNode.nextNode;
             }
             //-----
@@ -140,18 +144,18 @@ public class TopologyNetwork implements Graph {
     }
 
     @Override
-    public void deleteEdge(int dataIndex1, int dataIndex2) {
+    public void deleteEdge(String dataIndex1, String dataIndex2) {
         if(dataIndexToVerticesIndex.containsKey(dataIndex1) &&
                 dataIndexToVerticesIndex.containsKey(dataIndex2)){
             int verticesIndex1 = dataIndexToVerticesIndex.get(dataIndex1);
             NextNode current = vertices.get(verticesIndex1).nextNode;
             NextNode previous = null;
             //这步的判断是必须的，此时恰好第一个nextNode就是想要的点，单独处理，防止我们引用空指针previous,下同
-            if(current.dataIndex == dataIndex2) {
+            if(current.dataIndex.equals(dataIndex2)) {
                 vertices.get(verticesIndex1).nextNode = current.nextNode;
                 current = null;
             }
-            while(current != null && current.dataIndex != dataIndex2){
+            while(current != null && !current.dataIndex.equals(dataIndex2)){
                 previous = current;
                 current = current.nextNode;
             }
@@ -160,11 +164,11 @@ public class TopologyNetwork implements Graph {
             int verticesIndex2 = dataIndexToVerticesIndex.get(dataIndex2);
             current = vertices.get(verticesIndex2).nextNode;
             previous = null;
-            if(current.dataIndex == dataIndex1) {
+            if(current.dataIndex.equals(dataIndex1)) {
                 vertices.get(verticesIndex2).nextNode = current.nextNode;
                 current = null;
             }
-            while(current != null && current.dataIndex != dataIndex1){
+            while(current != null && !current.dataIndex.equals(dataIndex1)){
                 previous = current;
                 current = current.nextNode;
             }
@@ -202,7 +206,7 @@ public class TopologyNetwork implements Graph {
         List<Vertex> vertexList = getVerticesInFloor(floor);
         double tempMin = 99999;
         double absolute;
-        int tempDataIndex = -1;
+        String tempDataIndex = floor + "-0";
 
         for(Vertex vertex : vertexList){
             absolute = Math.abs(x - vertex.x) + Math.abs(y -vertex.y);

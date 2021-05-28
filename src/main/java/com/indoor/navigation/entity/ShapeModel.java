@@ -1,17 +1,13 @@
 package com.indoor.navigation.entity;
 
-import javax.persistence.*;
-
 /**
  * @author HaoYu
- * @description indoorMap Entity
+ * @description shpFile Entity
  * the_geom是shp内部存储的地理实体数据转化为字符串
  * @date 2021/05/24
  */
-@Entity
-@Table(name = "indoorMap")
+
 public class ShapeModel {
-    @Id
     private Integer id;
     private String beginId;
     private Double beginX;
@@ -19,6 +15,7 @@ public class ShapeModel {
     private String endId;
     private Double endX;
     private Double endY;
+    private String floor;
     private String the_geom;
 
     public Integer getId() {
@@ -77,6 +74,14 @@ public class ShapeModel {
         this.endY = endY;
     }
 
+    public String getFloor() {
+        return floor;
+    }
+
+    public void setFloor(String floor) {
+        this.floor = floor;
+    }
+
     public String getThe_geom() {
         return the_geom;
     }
@@ -95,6 +100,7 @@ public class ShapeModel {
                 ", endId='" + endId + '\'' +
                 ", endX=" + endX +
                 ", endY=" + endY +
+                ", floor=" + floor +
                 ", the_geom='" + the_geom + '\'' +
                 '}';
     }

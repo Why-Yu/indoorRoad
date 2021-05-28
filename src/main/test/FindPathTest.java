@@ -42,6 +42,13 @@ public class FindPathTest {
 
             startTime = System.currentTimeMillis();
             List<Node> pathList = findPath.getShortestPath();
+            StringBuilder result = new StringBuilder();
+            for (Node pathNode : pathList)
+            {
+                result.append(pathNode.dataIndex);
+                result.append("   ");
+            }
+            System.out.println(result.toString());
             endTime = System.currentTimeMillis();
             findPathTime += endTime - startTime;
 
@@ -74,26 +81,28 @@ public class FindPathTest {
     //生成一个随机网络
     public TopologyNetwork createNetwork(int floors, int verticesInFloor) {
         TopologyNetwork network = new TopologyNetwork();
-        int dataIndex = 1;
         for (int i = 1; i < floors + 1; i++) {
             for (int j = 0; j < verticesInFloor; j++) {
-                network.insertVertex(dataIndex++, i, Math.random() * 100, Math.random() * 100);
+                String dataIndex = Integer.toString(i) + "-" + Integer.toString(j);
+                network.insertVertex(dataIndex, i, Math.random() * 100, Math.random() * 100);
             }
         }
 
         Random rm = new Random();
-        dataIndex = 0;
         for (int i = 1; i < floors + 1; i++) {
             for (int j = 0; j < verticesInFloor; j++) {
-                dataIndex++;
+                String dataIndexFrom = Integer.toString(i) + "-" + Integer.toString(j);
                 for (int k = 0; k < 3; k++) {  //修改这个参数，理论上能使路径更加长，每一步可选的路径减少
-                    network.insertEdge(dataIndex, rm.nextInt(verticesInFloor) + (i - 1) * verticesInFloor + 1, Math.random() * 10);
+                    String dataIndexTo = Integer.toString(i) + "-" + Integer.toString(rm.nextInt(verticesInFloor));
+                    network.insertEdge(dataIndexFrom, dataIndexTo, Math.random() * 10);
                 }
             }
         }
 
         for (int i = 1; i < floors + 1; i++) {
-            network.insertEdge(verticesInFloor * i, verticesInFloor * i + 1, 5);
+            String dataIndexFrom = Integer.toString(i) + "-0";
+            String dataIndexTo = Integer.toString(i + 1) + "-0";
+            network.insertEdge(dataIndexFrom, dataIndexTo, 5);
         }
 
         return network;

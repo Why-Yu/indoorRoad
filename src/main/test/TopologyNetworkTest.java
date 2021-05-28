@@ -1,16 +1,11 @@
+import com.indoor.navigation.algorithm.datastructure.TopologyNetwork;
 import org.junit.Test;
 
 public class TopologyNetworkTest {
-    @Test
-    public void testMap(){
-//        TopologyNetwork network = new TopologyNetwork();
-//        network.insertVertex(1, 2, 3, 4);
-//        network.insertVertex(20, 2, 6, 7);
-//        network.insertVertex(20, 2, 6, 7);
-//        for(Map.Entry<Integer, Integer> entry : network.dataIndexToVerticesIndex.entrySet()){
-//            System.out.println("key= " + entry.getKey() + " and value= " + entry.getValue());
-//        }
-    }
+//    @Test
+//    public void testNearNode(){
+//
+//    }
 
 //    @Test
 //    public void testDelete(){

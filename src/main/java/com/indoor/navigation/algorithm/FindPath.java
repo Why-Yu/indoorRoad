@@ -3,18 +3,20 @@ package com.indoor.navigation.algorithm;
 import com.indoor.navigation.algorithm.datastructure.MinHeap;
 import com.indoor.navigation.algorithm.datastructure.Node;
 import com.indoor.navigation.algorithm.datastructure.TopologyNetwork;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@Component
 public class FindPath {
 
     public TopologyNetwork network;
     public MinHeap<Node> minHeap;
-    public Map<Integer, Node> openMap;
-    public Map<Integer, Node> closeMap;
+    public Map<String, Node> openMap;
+    public Map<String, Node> closeMap;
 
     public Node startNode;
     public Node endNode;
@@ -72,7 +74,7 @@ public class FindPath {
         closeMap.put(startNode.dataIndex, startNode);
 
         //算法
-        while(currentNode.dataIndex != endNode.dataIndex){
+        while(!currentNode.dataIndex.equals(endNode.dataIndex)){
             for(Node node : network.getLinkedNode(currentNode)){
                 if(!closeMap.containsKey(node.dataIndex)){
                     if(!openMap.containsKey(node.dataIndex)){

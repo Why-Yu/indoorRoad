@@ -8,8 +8,8 @@ import java.util.*;
 
 public class StupidFindPath {
     public TopologyNetwork network;
-    public Map<Integer, Node> openMap;
-    public Map<Integer, Node> closeMap;
+    public Map<String, Node> openMap;
+    public Map<String, Node> closeMap;
 
     public Node startNode;
     public Node endNode;
@@ -66,7 +66,7 @@ public class StupidFindPath {
         closeMap.put(startNode.dataIndex, startNode);
 
         //算法
-        while(currentNode.dataIndex != endNode.dataIndex){
+        while(!currentNode.dataIndex.equals(endNode.dataIndex)){
             for(Node node : network.getLinkedNode(currentNode)){
                 if(!closeMap.containsKey(node.dataIndex)){
                     if(!openMap.containsKey(node.dataIndex)){
