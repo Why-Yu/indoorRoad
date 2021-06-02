@@ -1,5 +1,7 @@
 package com.indoor.navigation.entity;
 
+import javax.persistence.*;
+
 /**
  * @author HaoYu
  * @description shpFile Entity
@@ -7,7 +9,13 @@ package com.indoor.navigation.entity;
  * @date 2021/05/24
  */
 
+@Entity
+@Table(name = "shape_model")
 public class ShapeModel {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="modelSeq")
+    @SequenceGenerator(name = "modelSeq",initialValue = 1, allocationSize = 1,sequenceName = "modelSeq")
+    private Integer modelId;
     private Integer id;
     private String beginId;
     private Double beginX;
@@ -17,6 +25,14 @@ public class ShapeModel {
     private Double endY;
     private String floor;
     private String the_geom;
+
+    public Integer getModelId() {
+        return modelId;
+    }
+
+    public void setModelId(Integer modelId) {
+        this.modelId = modelId;
+    }
 
     public Integer getId() {
         return id;
@@ -93,14 +109,15 @@ public class ShapeModel {
     @Override
     public String toString() {
         return "ShapeModel{" +
-                "id=" + id +
+                "modelId=" + modelId +
+                ", id=" + id +
                 ", beginId='" + beginId + '\'' +
                 ", beginX=" + beginX +
                 ", beginY=" + beginY +
                 ", endId='" + endId + '\'' +
                 ", endX=" + endX +
                 ", endY=" + endY +
-                ", floor=" + floor +
+                ", floor='" + floor + '\'' +
                 ", the_geom='" + the_geom + '\'' +
                 '}';
     }

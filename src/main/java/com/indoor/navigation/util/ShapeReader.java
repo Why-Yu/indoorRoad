@@ -75,6 +75,22 @@ public class ShapeReader {
         return modelList;
     }
 
+    public ArrayList<ShapeModel> readSingleShapeFile(String filePath, String floor) {
+        ArrayList<ShapeModel> modelList = new ArrayList<>();
+        File folder = new File(filePath);
+        if (folder.toString().endsWith("road.shp")) {
+            try {
+                modelList = getShapeFile(folder, floor);
+                return modelList;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            logger.info("请选择shp文件");
+        }
+        return modelList;
+    }
+
     private ArrayList<ShapeModel> getShapeFile(File file, String floor) throws Exception {
 
         Map<String, Object> map = new HashMap<String, Object>();
@@ -118,9 +134,10 @@ public class ShapeReader {
     }
 
     public static void main(String[] args) {
-        String path = "F:\\indoorData\\indoorMap";
-        ShapeReader shpReader = new ShapeReader();
-        ArrayList<ShapeModel> resultList = shpReader.readShapeFile(path);
-        System.out.println(resultList.get(1011));
+//        String path = "F:\\indoorData\\indoorMap";
+//        String path = "null";
+//        ShapeReader shpReader = new ShapeReader();
+//        ArrayList<ShapeModel> resultList = shpReader.readShapeFile(path);
+//        System.out.println(resultList.size());
     }
 }
