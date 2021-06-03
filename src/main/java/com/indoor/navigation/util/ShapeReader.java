@@ -130,6 +130,8 @@ public class ShapeReader {
             }
             models.add(model);
         }
+        // 关闭dataStore,防止之后再读取，出现The following locker still has a lock: read on file错误
+        dataStore.dispose();
         return models;
     }
 

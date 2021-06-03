@@ -7,12 +7,17 @@ import com.indoor.navigation.algorithm.datastructure.Node;
 import com.indoor.navigation.algorithm.datastructure.TopologyNetwork;
 import com.indoor.navigation.entity.*;
 import com.indoor.navigation.service.IndoorEdgeService;
+import com.indoor.navigation.service.IndoorModelService;
 import com.indoor.navigation.service.IndoorVertexService;
 import com.indoor.navigation.util.ShapeReader;
 import com.indoor.navigation.util.SpringContextUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -32,13 +37,16 @@ public class IndoorController {
     @Autowired
     IndoorEdgeService edgeService;
     @Autowired
+    IndoorModelService modelService;
+    @Autowired
     ShapeReader shpReader;
     @Autowired
     FindPath findPath;
 
 
     /*
-     * description: saveShp <br>
+     * description: 将shapefile文件中的属性导入库，以后可以考虑利用the_geom的WKT格式的数据导入postGis中
+     * 再利用矩形查找，获得离用户输入点最近的那条线的垂点作为计算的起终点 <br>
      * date: 2021/5/28 21:24 <br>
      * author: HaoYu <br>
      * @param filePath 储存shapeFile文件的目录，并且子目录的编写需要符合一定格式
@@ -47,7 +55,7 @@ public class IndoorController {
     @RequestMapping(value="/saveShp")
     @CrossOrigin
     public String saveShp(@RequestBody JSONObject jsonParam) {
-        ArrayList<ShapeModel> modelList = new ArrayList<>();
+        ArrayList<ShapeModel> modelList;
         if (jsonParam.getString("floor") == null) {
             modelList = shpReader.readShapeFile(jsonParam.getString("filePath"));
         } else {
@@ -61,6 +69,8 @@ public class IndoorController {
         for (ShapeModel model : modelList) {
             startGlobalIndex = model.getFloor() + "-" + model.getBeginId();
             endGlobalIndex = model.getFloor() + "-" + model.getEndId();
+            model.setBeginId(startGlobalIndex);
+            model.setEndId(endGlobalIndex);
             // 读取的shapeModel中的floor是String这里转换为Integer
             floor = Integer.parseInt(model.getFloor());
             Vertex vertexBegin = new Vertex(startGlobalIndex, model.getBeginId(),
@@ -75,6 +85,7 @@ public class IndoorController {
             edgeList.add(edge);
         }
         // 有重复的没关系，insert的时候主键一致，数据库应该会自动覆盖
+        modelService.saveAll(modelList);
         vertexService.saveAll(vertexList);
         edgeService.saveAll(edgeList);
         logger.info("成功导入目录下的所有road.shp");
@@ -94,6 +105,7 @@ public class IndoorController {
     public String getShortestPath(@RequestBody TransmissionNode paramsNode){
         //每次都从spring容器中拿出一个新的TopologyNetwork的实例
         TopologyNetwork network = SpringContextUtil.getBean(TopologyNetwork.class);
+        // !!!!!! 其实使用一张shape_model表就好了，不需要两张表，不知道当初怎么想的，但暂时先不改吧
         for (Vertex vertex : vertexService.findAll()) {
             network.insertVertex(vertex.getGlobalIndex(), vertex.getFloor(), vertex.getX(), vertex.getY());
         }
@@ -122,6 +134,31 @@ public class IndoorController {
         return JSON.toJSONString(resultNodeList);
     }
 
+    @GetMapping(value = "/shapeFindAll/{page}/{size}")
+    @CrossOrigin
+    public Page<ShapeModel> getPageShape (@PathVariable("page") Integer page, @PathVariable("size") Integer size) {
+        // 使用Jpa封装好的page方法page-1是因为数组从0开始的,前端传过来第1页实际上是数组的第0页
+        Pageable pageable = PageRequest.of(page - 1, size);
+        return modelService.findAll(pageable);
+    }
+
+    //查询用户分页并且绑定id字段来进行正序逆序排序
+    @GetMapping("/shapeFindAllSort/{page}/{size}/{sortType}/{sortableFields}")
+    @CrossOrigin
+    public Page<ShapeModel> getPageShapeSortable(
+            @PathVariable("page") Integer page, // 第几页
+            @PathVariable("size") Integer size, // 显示多少条
+            @PathVariable("sortType") String sortType, // 正序还是逆序
+            @PathVariable("sortableFields") String sortableFields //需要按照哪一个字段域来排序
+    ) {
+        //判断排序类型及排序字段
+        Sort sort = "ascending".equals(sortType) ? Sort.by(Sort.Direction.ASC, sortableFields) : Sort.by(Sort.Direction.DESC, sortableFields);
+        //获取pageable
+        Pageable pageable = PageRequest.of(page-1,size,sort);
+        return modelService.findAll(pageable);
+
+    }
+
     @RequestMapping(value = "/test")
     @CrossOrigin
     public String test (@RequestBody JSONObject jsonParam) {
@@ -130,5 +167,12 @@ public class IndoorController {
         } else {
             return "ok";
         }
+    }
+    @RequestMapping(value = "/test2")
+    @CrossOrigin
+    public String test2 (@RequestBody JSONObject jsonParam) {
+        // List<Edge> edgeList = edgeService.findByStartIndex(jsonParam.getString("startIndex"));
+        List<ResultShapeModel> trimModelList = modelService.findAllTrimModel();
+        return JSON.toJSONString(trimModelList);
     }
 }

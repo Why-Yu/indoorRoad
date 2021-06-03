@@ -1,5 +1,7 @@
 package com.indoor.navigation.entity;
 
+import com.indoor.navigation.Interfaces.TrimShapeModel;
+
 import javax.persistence.*;
 
 /**
@@ -11,7 +13,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "shape_model")
-public class ShapeModel {
+public class ShapeModel{
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="modelSeq")
     @SequenceGenerator(name = "modelSeq",initialValue = 1, allocationSize = 1,sequenceName = "modelSeq")
