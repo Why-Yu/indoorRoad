@@ -119,7 +119,6 @@ public class IndoorController {
             network.insertEdge(floorDown + "-0", floorUp + "-0", 5);
         }
         // ******
-
         findPath.changeNetwork(network);
         findPath.setStartNode(paramsNode.getStartFloor(), paramsNode.getStartX(), paramsNode.getStartY());
         findPath.setEndNode(paramsNode.getEndFloor(), paramsNode.getEndX(), paramsNode.getEndY());
@@ -132,6 +131,12 @@ public class IndoorController {
         }
         logger.info("成功获得最短路径");
         return JSON.toJSONString(resultNodeList);
+    }
+
+    @GetMapping(value = "/shapeFindAll")
+    @CrossOrigin
+    public List<ResultShapeModel> getTrimShape() {
+        return modelService.findAllTrimModel();
     }
 
     @GetMapping(value = "/shapeFindAll/{page}/{size}")
@@ -156,7 +161,6 @@ public class IndoorController {
         //获取pageable
         Pageable pageable = PageRequest.of(page-1,size,sort);
         return modelService.findAll(pageable);
-
     }
 
     @RequestMapping(value = "/test")

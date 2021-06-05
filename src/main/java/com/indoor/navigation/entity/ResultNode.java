@@ -50,4 +50,14 @@ public class ResultNode {
     public void setY(double y) {
         this.y = y;
     }
+
+    @Override
+    public String toString() {
+        return "ResultNode{" +
+                "dataIndex='" + dataIndex + '\'' +
+                ", floor=" + floor +
+                ", x=" + x +
+                ", y=" + y +
+                '}';
+    }
 }
