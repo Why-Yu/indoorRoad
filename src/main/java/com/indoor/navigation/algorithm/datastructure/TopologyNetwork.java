@@ -204,7 +204,7 @@ public class TopologyNetwork implements Graph {
      */
     public Node findNearNode(int floor, double x, double y){
         List<Vertex> vertexList = getVerticesInFloor(floor);
-        double tempMin = 99999;
+        double tempMin = Double.MAX_VALUE;
         double absolute;
         String tempDataIndex = floor + "-0";
 

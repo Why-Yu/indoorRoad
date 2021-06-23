@@ -8,15 +8,29 @@ import java.util.ArrayList;
  * @date 2021/06/23
  */
 public class WrapResultNode {
-    private ArrayList<ResultNode> resultNodeList;
+    private ArrayList<ResultNode> resultNodes;
+    public int floor;
     private String message;
 
-    public ArrayList<ResultNode> getResultNodeList() {
-        return resultNodeList;
+    public WrapResultNode() {
+        this.resultNodes = new ArrayList<>();
+        this.floor = 0;
+        this.message = "";
+    }
+    public ArrayList<ResultNode> getResultNodes() {
+        return resultNodes;
     }
 
-    public void setResultNodeList(ArrayList<ResultNode> resultNodeList) {
-        this.resultNodeList = resultNodeList;
+    public void setResultNodes(ArrayList<ResultNode> resultNodes) {
+        this.resultNodes = resultNodes;
+    }
+
+    public int getFloor() {
+        return floor;
+    }
+
+    public void setFloor(int floor) {
+        this.floor = floor;
     }
 
     public String getMessage() {
@@ -27,10 +41,15 @@ public class WrapResultNode {
         this.message = message;
     }
 
+    public void addMessage(String message) {
+        this.message += message;
+    }
+
     @Override
     public String toString() {
         return "WrapResultNode{" +
-                "resultNodeList=" + resultNodeList +
+                "resultNodes=" + resultNodes +
+                ", floor=" + floor +
                 ", message='" + message + '\'' +
                 '}';
     }

@@ -1,6 +1,6 @@
 package com.indoor.navigation;
 
-import com.indoor.navigation.controller.HelloController;
+import com.indoor.navigation.controller.IndoorDataController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -19,12 +19,12 @@ class NavigationApplicationTests {
     private MockMvc mockMvc;
     @BeforeEach
     public void setMockMvc() throws Exception{
-        mockMvc = MockMvcBuilders.standaloneSetup(new HelloController()).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(new IndoorDataController()).build();
     }
     @Test
     void testHello() throws Exception{
         mockMvc.perform(MockMvcRequestBuilders
-                .get("/hello")
+                .get("/test")
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andDo(MockMvcResultHandlers.print())

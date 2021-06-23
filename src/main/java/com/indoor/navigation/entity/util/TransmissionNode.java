@@ -5,7 +5,6 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * @author HaoYu
  * @description get information from client<br>
- *         navMode表示导航模式，其中1表示室内外一体化导航，2表示纯室内导航
  * @date 2021/05/30
  */
 public class TransmissionNode {
@@ -21,8 +20,8 @@ public class TransmissionNode {
     private double startY;
     @ApiModelProperty("终止y")
     private double endY;
-    @ApiModelProperty("导航模式")
-    private int navMode;
+    @ApiModelProperty("导航方向,1表示室外到室内,0表示室内到室外")
+    private boolean navFromOut;
 
     public int getStartFloor() {
         return startFloor;
@@ -72,12 +71,12 @@ public class TransmissionNode {
         this.endY = endY;
     }
 
-    public int getNavMode() {
-        return navMode;
+    public boolean isNavFromOut() {
+        return navFromOut;
     }
 
-    public void setNavMode(int navMode) {
-        this.navMode = navMode;
+    public void setNavFromOut(boolean navFromOut) {
+        this.navFromOut = navFromOut;
     }
 
     @Override
@@ -89,7 +88,7 @@ public class TransmissionNode {
                 ", endX=" + endX +
                 ", startY=" + startY +
                 ", endY=" + endY +
-                ", navMode=" + navMode +
+                ", navFromOut=" + navFromOut +
                 '}';
     }
 }

@@ -1,15 +1,12 @@
 package com.indoor.navigation.controller;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.indoor.navigation.algorithm.FindPath;
-import com.indoor.navigation.algorithm.datastructure.Node;
-import com.indoor.navigation.algorithm.datastructure.TopologyNetwork;
 import com.indoor.navigation.entity.database.ChangeVertex;
 import com.indoor.navigation.entity.database.Edge;
 import com.indoor.navigation.entity.database.ShapeModel;
 import com.indoor.navigation.entity.database.Vertex;
-import com.indoor.navigation.entity.util.*;
+import com.indoor.navigation.entity.util.LonLat;
+import com.indoor.navigation.entity.util.ResultShapeModel;
 import com.indoor.navigation.service.IndoorChangeVertexService;
 import com.indoor.navigation.service.IndoorEdgeService;
 import com.indoor.navigation.service.IndoorModelService;
@@ -17,7 +14,6 @@ import com.indoor.navigation.service.IndoorVertexService;
 import com.indoor.navigation.util.ChangeType;
 import com.indoor.navigation.util.MercatorToLonLat;
 import com.indoor.navigation.util.ShapeReader;
-import com.indoor.navigation.util.SpringContextUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -35,13 +31,14 @@ import java.util.List;
 
 /**
  * @author HaoYu
- * @description Controller
+ * @description 和数据有关的接口
  * @date 2021/05/24
  */
-@Api(tags = "IndoorController", description = "所有的测试接口")
+@Api(tags = "IndoorDataController", description = "数据测试接口")
 @RestController
-public class IndoorController {
-    private final static Logger logger = LoggerFactory.getLogger(IndoorController.class);
+@RequestMapping("/data")
+public class IndoorDataController {
+    private final static Logger logger = LoggerFactory.getLogger(IndoorDataController.class);
     @Autowired
     IndoorVertexService vertexService;
     @Autowired
@@ -59,14 +56,15 @@ public class IndoorController {
      * 再利用矩形查找，获得离用户输入点最近的那条线的垂点作为计算的起终点 <br>
      * date: 2021/5/28 21:24 <br>
      * author: HaoYu <br>
+     *
      * @param jsonParam 储存shapeFile文件的目录，并且子目录的编写需要符合一定格式
      * @return java.lang.String
      */
     @ApiOperation("shapefile文件导入库，直接输入目录即可")
-    @RequestMapping(value="/saveShp", method = RequestMethod.POST)
+    @RequestMapping(value = "/saveShp", method = RequestMethod.POST)
     @CrossOrigin
     public String saveShp(@ApiParam(name = "filePath", value = "文件目录")
-                              @RequestBody JSONObject jsonParam) {
+                          @RequestBody JSONObject jsonParam) {
         ArrayList<ShapeModel> modelList;
         if (jsonParam.getString("floor") == null) {
             modelList = shpReader.readShapeFile(jsonParam.getString("filePath"));
@@ -106,56 +104,6 @@ public class IndoorController {
         return "ok";
     }
 
-    /**
-     * description: getShortestPath
-     * 每一次访问都重新构建拓扑网络，目的是为了之后能对不同建筑物进行导航，
-     * 而不是Springboot默认的单例模式，重复在一个network上添加<br>
-     * date: 2021/5/28 22:10 <br>
-     * author: HaoYu <br>
-     * @return java.lang.String
-     */
-    @ApiOperation("获取室内路径的接口")
-    @RequestMapping(value="/getShortestPath", method = RequestMethod.POST)
-    @CrossOrigin
-    public String getShortestPath(@RequestBody TransmissionNode paramsNode){
-        //每次都从spring容器中拿出一个新的FindPath和TopologyNetwork的实例,因为springboot默认是单例
-        FindPath findPath = SpringContextUtil.getBean(FindPath.class);
-        TopologyNetwork network = SpringContextUtil.getBean(TopologyNetwork.class);
-        // !!!!!! 其实使用一张shape_model表就好了，不需要两张表，不知道当初怎么想的，但暂时先不改吧
-        for (Vertex vertex : vertexService.findAll()) {
-            network.insertVertex(vertex.getGlobalIndex(), vertex.getFloor(), vertex.getX(), vertex.getY());
-        }
-        for (Edge edge : edgeService.findAll()) {
-            network.insertEdge(edge.getStartIndex(), edge.getEndIndex(), edge.getWeight());
-        }
-        // ******层与层之间的联通关系现在只能通过saveExtra接口手动添加
-        for (ChangeVertex cv: changeVertexService.findByChangeType(ChangeType.stairs)) {
-            if (cv.getUpGlobalIndex() != null) {
-                network.insertEdge(cv.getGlobalIndex(), cv.getUpGlobalIndex(), cv.getChangeType().ordinal() * 2);
-            }
-        }
-        // ******
-        findPath.changeNetwork(network);
-        if (paramsNode.getNavMode() == 1) {
-
-        }
-        findPath.setStartNode(paramsNode.getStartFloor(), paramsNode.getStartX(), paramsNode.getStartY());
-        findPath.setEndNode(paramsNode.getEndFloor(), paramsNode.getEndX(), paramsNode.getEndY());
-
-        List<Node> pathList = findPath.getShortestPath();
-        // 必须用List这样能保证输出结果的顺序的正确
-        ArrayList<WrapResultNode> wrapResultNodes = new ArrayList<>();
-        ArrayList<ResultNode> resultNodes = new ArrayList<>();
-        LonLat lonLat;
-//        for (Node pathNode : pathList)
-//        {
-//            lonLat = MercatorToLonLat.mercatorToLonLat(pathNode.x, pathNode.y);
-//            resultNodeList.add(new ResultNode(pathNode.dataIndex, pathNode.floor, lonLat.getLon(), lonLat.getLat()));
-//        }
-
-        logger.info("成功获得最短路径");
-        return JSON.toJSONString(wrapResultNodes);
-    }
 
     @ApiOperation("获取室内数据接口")
     @GetMapping(value = "/shapeFindAll")
@@ -167,7 +115,7 @@ public class IndoorController {
     @ApiOperation("分页获取室内数据的接口")
     @GetMapping(value = "/shapeFindAll/{page}/{size}")
     @CrossOrigin
-    public Page<ShapeModel> getPageShape (@PathVariable("page") Integer page, @PathVariable("size") Integer size) {
+    public Page<ShapeModel> getPageShape(@PathVariable("page") Integer page, @PathVariable("size") Integer size) {
         // 使用Jpa封装好的page方法page-1是因为数组从0开始的,前端传过来第1页实际上是数组的第0页
         Pageable pageable = PageRequest.of(page - 1, size);
         return modelService.findAll(pageable);
@@ -175,6 +123,7 @@ public class IndoorController {
 
     /**
      * 查询用户分页并且绑定id字段来进行正序逆序排序
+     *
      * @param page
      * @param size
      * @param sortType
@@ -193,7 +142,7 @@ public class IndoorController {
         //判断排序类型及排序字段
         Sort sort = "ascending".equals(sortType) ? Sort.by(Sort.Direction.ASC, sortableFields) : Sort.by(Sort.Direction.DESC, sortableFields);
         //获取pageable
-        Pageable pageable = PageRequest.of(page-1,size,sort);
+        Pageable pageable = PageRequest.of(page - 1, size, sort);
         return modelService.findAll(pageable);
     }
 
@@ -201,13 +150,14 @@ public class IndoorController {
      * description: saveExtra存储转换点以及门等额外边缘信息 <br>
      * date: 2021/6/22 22:14 <br>
      * author: HaoYu <br>
+     *
      * @param
      * @return java.lang.String
      */
     @ApiOperation("存储额外边缘信息")
     @RequestMapping(value = "/saveExtra", method = RequestMethod.POST)
     @CrossOrigin
-    public String saveExtra(@RequestBody List<ChangeVertex> changeVertexList){
+    public String saveExtra(@RequestBody List<ChangeVertex> changeVertexList) {
         // 添加楼层之间的额外边缘
         for (int i = 8; i < 22; i++) {
             String floor = Integer.toString(i);
@@ -223,20 +173,19 @@ public class IndoorController {
     @ApiOperation("测试接口，测试部分功能时使用")
     @RequestMapping(value = "/test", method = RequestMethod.POST)
     @CrossOrigin
-    public String test (@RequestBody JSONObject jsonParam) {
+    public String test(@RequestBody JSONObject jsonParam) {
         // List<Edge> edgeList = edgeService.findByStartIndex(jsonParam.getString("startIndex"));
 //        List<ResultShapeModel> trimModelList = modelService.findAllTrimModel();
 //        return JSON.toJSONString(trimModelList);
-//        LonLat lonLat = MercatorToLonLat.mercatorToLonLat(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
-//        return lonLat.toString();
-        Mercator mercator = MercatorToLonLat.lonLatToMercator(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
-        return mercator.toString();
+        LonLat lonLat = MercatorToLonLat.mercatorToLonLat(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
+        return lonLat.toString();
+//        Mercator mercator = MercatorToLonLat.lonLatToMercator(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
+//        return mercator.toString();
 //        for(ChangeVertex cv : changeVertexService.findByChangeType(ChangeType.stairs)) {
 //            if (cv.getUpGlobalIndex() == null) {
 //                System.out.println(cv.getChangeType().ordinal());
 //            }
 //        }
 //        return changeVertexService.findByChangeType(ChangeType.stairs).toString();
-
     }
 }
