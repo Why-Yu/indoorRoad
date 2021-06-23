@@ -1,6 +1,6 @@
 package com.indoor.navigation.util;
 
-import com.indoor.navigation.entity.ShapeModel;
+import com.indoor.navigation.entity.database.ShapeModel;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.FeatureSource;
@@ -93,7 +93,7 @@ public class ShapeReader {
 
     private ArrayList<ShapeModel> getShapeFile(File file, String floor) throws Exception {
 
-        Map<String, Object> map = new HashMap<String, Object>();
+        Map<String, Object> map = new HashMap<>();
         map.put("url", file.toURI().toURL());
         ArrayList<ShapeModel> models = new ArrayList<>();
         DataStore dataStore = DataStoreFinder.getDataStore(map);
@@ -141,5 +141,7 @@ public class ShapeReader {
 //        ShapeReader shpReader = new ShapeReader();
 //        ArrayList<ShapeModel> resultList = shpReader.readShapeFile(path);
 //        System.out.println(resultList.size());
+
+
     }
 }

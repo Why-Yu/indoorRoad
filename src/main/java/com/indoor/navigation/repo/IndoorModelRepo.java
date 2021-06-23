@@ -1,16 +1,12 @@
 package com.indoor.navigation.repo;
 
-import com.indoor.navigation.Interfaces.TrimShapeModel;
-import com.indoor.navigation.entity.ResultShapeModel;
-import com.indoor.navigation.entity.ShapeModel;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.indoor.navigation.entity.util.ResultShapeModel;
+import com.indoor.navigation.entity.database.ShapeModel;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
 
 @Repository
 public interface IndoorModelRepo extends JpaRepository<ShapeModel, Integer> {
@@ -26,12 +22,12 @@ public interface IndoorModelRepo extends JpaRepository<ShapeModel, Integer> {
     Iterable<TrimShapeModel> findAllTrimModel();
     3
     创建新的实体类
-    @Query(value = "select new com.indoor.navigation.entity.ResultShapeModel(modelId, beginId, " +
+    @Query(value = "select new com.indoor.navigation.entity.util.ResultShapeModel(modelId, beginId, " +
         "beginX, beginY, endId, endX, endY, floor) from ShapeModel ")
     List<ResultShapeModel> findAllTrimModel();
     但第一第二种只会传value丢失了key值，主要用一三这两个方法吧，一简便，三不丢key
      */
-    @Query(value = "select new com.indoor.navigation.entity.ResultShapeModel(modelId, beginId, " +
+    @Query(value = "select new com.indoor.navigation.entity.util.ResultShapeModel(modelId, beginId, " +
             "beginX, beginY, endId, endX, endY, floor) from ShapeModel ")
     List<ResultShapeModel> findAllTrimModel();
 

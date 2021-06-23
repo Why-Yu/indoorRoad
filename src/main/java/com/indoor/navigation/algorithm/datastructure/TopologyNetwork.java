@@ -123,7 +123,7 @@ public class TopologyNetwork implements Graph {
     public void insertEdge(String dataIndex1, String dataIndex2, double weight) {
         if(dataIndexToVerticesIndex.containsKey(dataIndex1) &&
         dataIndexToVerticesIndex.containsKey(dataIndex2) && !dataIndex1.equals(dataIndex2)){
-            //-----这一块测试之后删掉,功能是生成随机网络时，拒绝重复添加边
+            //-----拒绝重复添加边
             int tempVerticesIndex = dataIndexToVerticesIndex.get(dataIndex1);
             NextNode tempNextNode = vertices.get(tempVerticesIndex).nextNode;
             while (tempNextNode != null){

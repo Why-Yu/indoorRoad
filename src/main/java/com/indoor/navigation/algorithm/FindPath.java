@@ -3,6 +3,7 @@ package com.indoor.navigation.algorithm;
 import com.indoor.navigation.algorithm.datastructure.MinHeap;
 import com.indoor.navigation.algorithm.datastructure.Node;
 import com.indoor.navigation.algorithm.datastructure.TopologyNetwork;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -10,7 +11,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author YH
+ */
 @Component
+@Scope("prototype")
 public class FindPath {
 
     public TopologyNetwork network;
@@ -40,11 +45,11 @@ public class FindPath {
     }
 
     public void setStartNode(int floor , double x, double y){
-        startNode = network.findNearNode(floor, x, y);
+        this.startNode = network.findNearNode(floor, x, y);
     }
 
     public void setEndNode(int floor, double x, double y){
-        endNode = network.findNearNode(floor, x, y);
+        this.endNode = network.findNearNode(floor, x, y);
     }
 
     /**
@@ -67,7 +72,9 @@ public class FindPath {
      * @return 由一系列Node表示的最短路径，供前端生成路径
      */
     public List<Node> getShortestPath() throws NullPointerException{
-        if(network == null || startNode == null || endNode == null) throw new NullPointerException("请先设置拓扑网络和起终点");
+        if(network == null || startNode == null || endNode == null) {
+            throw new NullPointerException("请先设置拓扑网络和起终点");
+        }
         //初始化
         getVector();
         currentNode = startNode;

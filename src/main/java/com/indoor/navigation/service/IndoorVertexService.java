@@ -1,12 +1,11 @@
 package com.indoor.navigation.service;
 
-import com.indoor.navigation.entity.Vertex;
+import com.indoor.navigation.entity.database.Vertex;
 import com.indoor.navigation.repo.IndoorVertexRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * @author HaoYu

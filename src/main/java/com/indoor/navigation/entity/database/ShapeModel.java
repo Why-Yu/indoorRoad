@@ -1,6 +1,4 @@
-package com.indoor.navigation.entity;
-
-import com.indoor.navigation.Interfaces.TrimShapeModel;
+package com.indoor.navigation.entity.database;
 
 import javax.persistence.*;
 

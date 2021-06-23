@@ -1,6 +1,6 @@
 package com.indoor.navigation.service;
 
-import com.indoor.navigation.entity.Edge;
+import com.indoor.navigation.entity.database.Edge;
 import com.indoor.navigation.repo.IndoorEdgeRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

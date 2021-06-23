@@ -1,4 +1,4 @@
-package com.indoor.navigation.entity;
+package com.indoor.navigation.entity.util;
 
 /**
  * @author HaoYu
