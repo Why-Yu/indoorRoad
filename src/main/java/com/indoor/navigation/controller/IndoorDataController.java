@@ -5,14 +5,12 @@ import com.indoor.navigation.entity.database.ChangeVertex;
 import com.indoor.navigation.entity.database.Edge;
 import com.indoor.navigation.entity.database.ShapeModel;
 import com.indoor.navigation.entity.database.Vertex;
-import com.indoor.navigation.entity.util.LonLat;
 import com.indoor.navigation.entity.util.ResultShapeModel;
 import com.indoor.navigation.service.IndoorChangeVertexService;
 import com.indoor.navigation.service.IndoorEdgeService;
 import com.indoor.navigation.service.IndoorModelService;
 import com.indoor.navigation.service.IndoorVertexService;
 import com.indoor.navigation.util.ChangeType;
-import com.indoor.navigation.util.MercatorToLonLat;
 import com.indoor.navigation.util.ShapeReader;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -27,6 +25,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -162,10 +161,12 @@ public class IndoorDataController {
         for (int i = 8; i < 22; i++) {
             String floor = Integer.toString(i);
             String floorUp = Integer.toString(i + 1);
-            changeVertexList.add(new ChangeVertex(floor + "-0", floorUp + "-0", ChangeType.stairs));
+            changeVertexList.add(new ChangeVertex(floor + "-35", floorUp + "-35", ChangeType.elevator));
+            changeVertexList.add(new ChangeVertex(floor + "-38", floorUp + "-38", ChangeType.elevator));
         }
         // 添加建筑物的出入口信息
         changeVertexList.add(new ChangeVertex("8-2", null, ChangeType.door));
+        changeVertexList.add(new ChangeVertex("8-9", null, ChangeType.door));
         changeVertexService.saveAll(changeVertexList);
         return "ok";
     }
@@ -177,15 +178,15 @@ public class IndoorDataController {
         // List<Edge> edgeList = edgeService.findByStartIndex(jsonParam.getString("startIndex"));
 //        List<ResultShapeModel> trimModelList = modelService.findAllTrimModel();
 //        return JSON.toJSONString(trimModelList);
-        LonLat lonLat = MercatorToLonLat.mercatorToLonLat(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
-        return lonLat.toString();
+//        LonLat lonLat = MercatorToLonLat.mercatorToLonLat(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
+//        return lonLat.toString();
 //        Mercator mercator = MercatorToLonLat.lonLatToMercator(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
 //        return mercator.toString();
-//        for(ChangeVertex cv : changeVertexService.findByChangeType(ChangeType.stairs)) {
-//            if (cv.getUpGlobalIndex() == null) {
-//                System.out.println(cv.getChangeType().ordinal());
-//            }
-//        }
-//        return changeVertexService.findByChangeType(ChangeType.stairs).toString();
+
+        List<ChangeType> changeTypes = Arrays.asList(ChangeType.elevator, ChangeType.escalator, ChangeType.stairs);
+        for(ChangeVertex cv : changeVertexService.findByChangeTypeIn(changeTypes)) {
+                System.out.println(cv.getChangeType().ordinal());
+        }
+        return "ok";
     }
 }

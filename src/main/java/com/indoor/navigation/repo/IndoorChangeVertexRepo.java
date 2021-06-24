@@ -12,6 +12,6 @@ import java.util.List;
  */
 @Repository
 public interface IndoorChangeVertexRepo extends JpaRepository<ChangeVertex, String> {
-    List<ChangeVertex> findByChangeType(ChangeType changeType);
+    List<ChangeVertex> findByChangeTypeIn(List<ChangeType> changeTypeList);
     ChangeVertex findByGlobalIndex(String globalIndex);
 }

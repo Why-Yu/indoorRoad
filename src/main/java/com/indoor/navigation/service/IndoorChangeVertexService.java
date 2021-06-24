@@ -26,8 +26,8 @@ public class IndoorChangeVertexService {
         return indoorChangeVertexRepo.saveAll(entities);
     }
 
-    public List<ChangeVertex> findByChangeType(ChangeType changeType) {
-        return indoorChangeVertexRepo.findByChangeType(changeType);
+    public List<ChangeVertex> findByChangeTypeIn(List<ChangeType> changeTypeList) {
+        return indoorChangeVertexRepo.findByChangeTypeIn(changeTypeList);
     }
 
     public ChangeVertex findByGlobalIndex(String globalIndex) {

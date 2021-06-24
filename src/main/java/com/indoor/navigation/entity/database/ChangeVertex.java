@@ -2,9 +2,7 @@ package com.indoor.navigation.entity.database;
 
 import com.indoor.navigation.util.ChangeType;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 /**
  * @author HaoYu
@@ -17,6 +15,8 @@ public class ChangeVertex {
     @Id
     private String globalIndex;
     private String upGlobalIndex;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
     private ChangeType changeType;
 
     public ChangeVertex(){}
