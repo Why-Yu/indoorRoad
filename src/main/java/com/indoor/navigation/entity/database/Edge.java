@@ -4,7 +4,7 @@ import javax.persistence.*;
 
 /**
  * @author HaoYu
- * @description Edge
+ * @description 存储网络拓扑中的边信息
  * @date 2021/05/28
  */
 @Entity
@@ -14,12 +14,14 @@ public class Edge {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="edgeSeq")
     @SequenceGenerator(name = "edgeSeq",initialValue = 1, allocationSize = 1,sequenceName = "edgeSeq")
     private Integer edgeId;
+    private String buildId;
     private String startIndex;
     private String endIndex;
     private Double weight;
 
     public Edge(){}
-    public Edge(String startIndex, String endIndex, Double weight) {
+    public Edge(String buildId, String startIndex, String endIndex, Double weight) {
+        this.buildId = buildId;
         this.startIndex = startIndex;
         this.endIndex = endIndex;
         this.weight = weight;
@@ -31,6 +33,14 @@ public class Edge {
 
     public void setEdgeId(Integer edgeId) {
         this.edgeId = edgeId;
+    }
+
+    public String getBuildId() {
+        return buildId;
+    }
+
+    public void setBuildId(String buildId) {
+        this.buildId = buildId;
     }
 
     public String getStartIndex() {
@@ -61,6 +71,7 @@ public class Edge {
     public String toString() {
         return "Edge{" +
                 "edgeId=" + edgeId +
+                ", buildId='" + buildId + '\'' +
                 ", startIndex='" + startIndex + '\'' +
                 ", endIndex='" + endIndex + '\'' +
                 ", weight=" + weight +

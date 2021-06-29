@@ -113,7 +113,7 @@ public class ShapeReader {
                 if (property.getName().toString().equals("the_geom"))
                     model.setThe_geom(property.getValue().toString());
                 if (property.getName().toString().equals("id"))
-                    model.setId(Integer.parseInt(property.getValue().toString()));
+                    model.setBuildId(property.getValue().toString());
                 if (property.getName().toString().equals("BeginId"))
                     model.setBeginId(property.getValue().toString());
                 if (property.getName().toString().equals("BeginX"))

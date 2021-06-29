@@ -36,5 +36,9 @@ public class IndoorEdgeService {
     public List<Edge> findAll() {
         return indoorEdgeRepo.findAll();
     }
+
+    public List<Edge> findByBuildId(String buildId) {
+        return indoorEdgeRepo.findByBuildId(buildId);
+    }
 }
 

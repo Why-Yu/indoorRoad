@@ -4,10 +4,12 @@ import com.alibaba.fastjson.JSON;
 import com.indoor.navigation.algorithm.FindPath;
 import com.indoor.navigation.algorithm.datastructure.Node;
 import com.indoor.navigation.algorithm.datastructure.TopologyNetwork;
+import com.indoor.navigation.entity.database.BoundingBox;
 import com.indoor.navigation.entity.database.ChangeVertex;
 import com.indoor.navigation.entity.database.Edge;
 import com.indoor.navigation.entity.database.Vertex;
 import com.indoor.navigation.entity.util.*;
+import com.indoor.navigation.service.IndoorBoundingBoxService;
 import com.indoor.navigation.service.IndoorChangeVertexService;
 import com.indoor.navigation.service.IndoorEdgeService;
 import com.indoor.navigation.service.IndoorVertexService;
@@ -42,6 +44,8 @@ public class IndoorNavController {
     IndoorEdgeService edgeService;
     @Autowired
     IndoorChangeVertexService changeVertexService;
+    @Autowired
+    IndoorBoundingBoxService boundingBoxService;
 
     /**
      * description: 为了能与室外导航整合，例如输入两个位置，获得两个POI的坐标，
@@ -70,16 +74,40 @@ public class IndoorNavController {
         //每次都从spring容器中拿出一个新的FindPath和TopologyNetwork的实例,因为springboot默认是单例
         FindPath findPath = SpringContextUtil.getBean(FindPath.class);
         TopologyNetwork network = SpringContextUtil.getBean(TopologyNetwork.class);
+
+        Mercator outdoorMercator;
+        Mercator indoorMercator;
+        String buildId = "1"; // 室内点落在哪个建筑物的范围内,则buildId就是此建筑物的序号
+        boolean hasFindBuildId = false;
+        if (paramsNode.isNavFromOut()) { // 从室外到室内
+            outdoorMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getStartX(), paramsNode.getStartY());
+            indoorMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getEndX(), paramsNode.getEndY());
+        } else { // 从室内到室外
+            outdoorMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getEndX(), paramsNode.getEndY());
+            indoorMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getStartX(), paramsNode.getStartY());
+        }
+        for (BoundingBox boundingBox : boundingBoxService.findAll()) {
+            if (indoorMercator.mercatorInBox(boundingBox)) {
+                buildId = boundingBox.getBuildId();
+                hasFindBuildId = true;
+                break;
+            }
+        }
+        if (!hasFindBuildId) {
+            logger.info("输入的室内坐标对应不上数据库中的任何一个建筑物范围");
+            return "室内坐标无法对应到建筑物";
+        }
+
         // !!!!!! 其实使用一张shape_model表就好了，不需要两张表，不知道当初怎么想的，但暂时先不改吧
-        for (Vertex vertex : vertexService.findAll()) {
+        for (Vertex vertex : vertexService.findByBuildId(buildId)) {
             network.insertVertex(vertex.getGlobalIndex(), vertex.getFloor(), vertex.getX(), vertex.getY());
         }
-        for (Edge edge : edgeService.findAll()) {
+        for (Edge edge : edgeService.findByBuildId(buildId)) {
             network.insertEdge(edge.getStartIndex(), edge.getEndIndex(), edge.getWeight());
         }
         // ******层与层之间的联通关系现在只能通过saveExtra接口手动添加
         List<ChangeType> changeTypes = Arrays.asList(ChangeType.elevator, ChangeType.escalator, ChangeType.stairs);
-        for (ChangeVertex cv : changeVertexService.findByChangeTypeIn(changeTypes)) {
+        for (ChangeVertex cv : changeVertexService.findByChangeTypeInAndBuildId(changeTypes, buildId)) {
             if (cv.getUpGlobalIndex() != null) {
                 network.insertEdge(cv.getGlobalIndex(), cv.getUpGlobalIndex(), cv.getChangeType().ordinal() * 2);
             }
@@ -88,24 +116,18 @@ public class IndoorNavController {
         // 导入室内拓扑网络
         findPath.changeNetwork(network);
 
+        Vertex doorVertex = findDoorVertex(outdoorMercator, buildId);
         if (paramsNode.isNavFromOut()) {
             // 从室外到室内
-            Mercator outdoorMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getStartX(), paramsNode.getStartY());
-            Mercator indoorMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getEndX(), paramsNode.getEndY());
-            Vertex doorVertex = findDoorVertex(outdoorMercator);
             // 最后返回的路径是从后追溯到前的，所以这里反过来注入，最后返回的路径就是正确顺序的
             findPath.setStartNode(paramsNode.getEndFloor(), indoorMercator.getX(), indoorMercator.getY());
             findPath.setEndNode(paramsNode.getStartFloor(), doorVertex.getX(), doorVertex.getY());
         } else {
             // 从室内到室外
-            Mercator outdoorMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getEndX(), paramsNode.getEndY());
-            Mercator indoorMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getStartX(), paramsNode.getStartY());
-            Vertex doorVertex = findDoorVertex(outdoorMercator);
             findPath.setStartNode(paramsNode.getEndFloor(), doorVertex.getX(), doorVertex.getY());
             findPath.setEndNode(paramsNode.getStartFloor(), indoorMercator.getX(), indoorMercator.getY());
         }
-        System.out.println(findPath.startNode);
-        System.out.println(findPath.endNode);
+
         List<Node> pathList = findPath.getShortestPath();
         // 对最短路径进行分段，并添加信息
         ArrayList<WrapResultNode> wrapResultNodes = new ArrayList<>();
@@ -124,16 +146,33 @@ public class IndoorNavController {
         //每次都从spring容器中拿出一个新的FindPath和TopologyNetwork的实例,因为springboot默认是单例
         FindPath findPath = SpringContextUtil.getBean(FindPath.class);
         TopologyNetwork network = SpringContextUtil.getBean(TopologyNetwork.class);
+
+        Mercator startMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getStartX(), paramsNode.getStartY());
+        Mercator endMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getEndX(), paramsNode.getEndY());
+        String buildId = "1"; // 室内点落在哪个建筑物的范围内,则buildId就是此建筑物的序号
+        boolean hasFindBuildId = false;
+
+        for (BoundingBox boundingBox : boundingBoxService.findAll()) {
+            if (startMercator.mercatorInBox(boundingBox)) {
+                buildId = boundingBox.getBuildId();
+                hasFindBuildId = true;
+                break;
+            }
+        }
+        if (!hasFindBuildId) {
+            logger.info("输入的室内坐标对应不上数据库中的任何一个建筑物范围");
+            return "室内坐标无法对应到建筑物";
+        }
         // !!!!!! 其实使用一张shape_model表就好了，不需要两张表，不知道当初怎么想的，但暂时先不改吧
-        for (Vertex vertex : vertexService.findAll()) {
+        for (Vertex vertex : vertexService.findByBuildId(buildId)) {
             network.insertVertex(vertex.getGlobalIndex(), vertex.getFloor(), vertex.getX(), vertex.getY());
         }
-        for (Edge edge : edgeService.findAll()) {
+        for (Edge edge : edgeService.findByBuildId(buildId)) {
             network.insertEdge(edge.getStartIndex(), edge.getEndIndex(), edge.getWeight());
         }
         // ******层与层之间的联通关系现在只能通过saveExtra接口手动添加
         List<ChangeType> changeTypes = Arrays.asList(ChangeType.elevator, ChangeType.escalator, ChangeType.stairs);
-        for (ChangeVertex cv : changeVertexService.findByChangeTypeIn(changeTypes)) {
+        for (ChangeVertex cv : changeVertexService.findByChangeTypeInAndBuildId(changeTypes, buildId)) {
             if (cv.getUpGlobalIndex() != null) {
                 network.insertEdge(cv.getGlobalIndex(), cv.getUpGlobalIndex(), cv.getChangeType().ordinal() * 2);
             }
@@ -141,9 +180,6 @@ public class IndoorNavController {
         // ******
         // 导入室内拓扑网络
         findPath.changeNetwork(network);
-
-        Mercator startMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getStartX(), paramsNode.getStartY());
-        Mercator endMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getEndX(), paramsNode.getEndY());
 
         // 最后返回的路径是从后追溯到前的，所以这里反过来注入，最后返回的路径就是正确顺序的
         findPath.setStartNode(paramsNode.getEndFloor(), endMercator.getX(), endMercator.getY());
@@ -163,13 +199,13 @@ public class IndoorNavController {
      * @param mercator
      * @return com.indoor.navigation.entity.database.Vertex
      */ 
-    private Vertex findDoorVertex(Mercator mercator) {
+    private Vertex findDoorVertex(Mercator mercator, String buildId) {
         Vertex doorVertex = new Vertex();
         Vertex tempDoorVertex;
         double tempMin = Double.MAX_VALUE;
         double absolute;
         List<ChangeType> changeTypes = Collections.singletonList(ChangeType.door);
-        for (ChangeVertex cv : changeVertexService.findByChangeTypeIn(changeTypes)) {
+        for (ChangeVertex cv : changeVertexService.findByChangeTypeInAndBuildId(changeTypes, buildId)) {
             tempDoorVertex = vertexService.findByGlobalIndex(cv.getGlobalIndex());
             absolute = Math.abs(mercator.getX() - tempDoorVertex.getX()) + Math.abs(mercator.getY() - tempDoorVertex.getY());
             if (absolute <= tempMin) {

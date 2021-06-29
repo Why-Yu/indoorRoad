@@ -32,4 +32,8 @@ public class IndoorModelService {
         return indoorModelRepo.findAll(pageable);
     }
 
+    public List<ShapeModel> findByBuildId(String buildId) {
+        return indoorModelRepo.findByBuildId(buildId);
+    }
+
 }

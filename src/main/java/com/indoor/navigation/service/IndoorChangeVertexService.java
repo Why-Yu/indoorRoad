@@ -30,6 +30,10 @@ public class IndoorChangeVertexService {
         return indoorChangeVertexRepo.findByChangeTypeIn(changeTypeList);
     }
 
+    public List<ChangeVertex> findByChangeTypeInAndBuildId(List<ChangeType> changeTypeList, String buildId) {
+        return indoorChangeVertexRepo.findByChangeTypeInAndBuildId(changeTypeList, buildId);
+    }
+
     public ChangeVertex findByGlobalIndex(String globalIndex) {
         return indoorChangeVertexRepo.findByGlobalIndex(globalIndex);
     }

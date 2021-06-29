@@ -1,5 +1,7 @@
 package com.indoor.navigation.entity.util;
 
+import com.indoor.navigation.entity.database.BoundingBox;
+
 /**
  * @author HaoYu
  * @description 墨卡托坐标
@@ -23,6 +25,11 @@ public class Mercator {
 
     public void setY(double y) {
         this.y = y;
+    }
+
+    public boolean mercatorInBox(BoundingBox box) {
+        return box.getMinLon() <= x && x <= box.getMaxLon()
+                && box.getMinLat() <= y && y <= box.getMaxLat();
     }
 
     @Override

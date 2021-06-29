@@ -1,16 +1,12 @@
 package com.indoor.navigation.controller;
 
 import com.alibaba.fastjson.JSONObject;
-import com.indoor.navigation.entity.database.ChangeVertex;
-import com.indoor.navigation.entity.database.Edge;
-import com.indoor.navigation.entity.database.ShapeModel;
-import com.indoor.navigation.entity.database.Vertex;
+import com.indoor.navigation.entity.database.*;
+import com.indoor.navigation.entity.util.LonLat;
 import com.indoor.navigation.entity.util.ResultShapeModel;
-import com.indoor.navigation.service.IndoorChangeVertexService;
-import com.indoor.navigation.service.IndoorEdgeService;
-import com.indoor.navigation.service.IndoorModelService;
-import com.indoor.navigation.service.IndoorVertexService;
+import com.indoor.navigation.service.*;
 import com.indoor.navigation.util.ChangeType;
+import com.indoor.navigation.util.MercatorToLonLat;
 import com.indoor.navigation.util.ShapeReader;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -25,7 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -47,6 +43,8 @@ public class IndoorDataController {
     @Autowired
     IndoorChangeVertexService changeVertexService;
     @Autowired
+    IndoorBoundingBoxService boundingBoxService;
+    @Autowired
     ShapeReader shpReader;
 
 
@@ -57,6 +55,7 @@ public class IndoorDataController {
      * author: HaoYu <br>
      *
      * @param jsonParam 储存shapeFile文件的目录，并且子目录的编写需要符合一定格式
+     *                  必须包含buildId(楼栋编号)以及filePath(文件的目录)
      * @return java.lang.String
      */
     @ApiOperation("shapefile文件导入库，直接输入目录即可")
@@ -65,6 +64,7 @@ public class IndoorDataController {
     public String saveShp(@ApiParam(name = "filePath", value = "文件目录")
                           @RequestBody JSONObject jsonParam) {
         ArrayList<ShapeModel> modelList;
+        String buildId = jsonParam.getString("buildId");
         if (jsonParam.getString("floor") == null) {
             modelList = shpReader.readShapeFile(jsonParam.getString("filePath"));
         } else {
@@ -72,34 +72,53 @@ public class IndoorDataController {
         }
         ArrayList<Vertex> vertexList = new ArrayList<>();
         ArrayList<Edge> edgeList = new ArrayList<>();
-        String startGlobalIndex;
-        String endGlobalIndex;
+        StringBuilder startGlobalIndex = new StringBuilder();
+        StringBuilder endGlobalIndex = new StringBuilder();
         Integer floor;
+
         for (ShapeModel model : modelList) {
-            startGlobalIndex = model.getFloor() + "-" + model.getBeginId();
-            endGlobalIndex = model.getFloor() + "-" + model.getEndId();
-            model.setBeginId(startGlobalIndex);
-            model.setEndId(endGlobalIndex);
+            startGlobalIndex.append(buildId).append("-").append(model.getFloor()).append("-").append(model.getBeginId());
+            endGlobalIndex.append(buildId).append("-").append(model.getFloor()).append("-").append(model.getEndId());
+            model.setBeginId(startGlobalIndex.toString());
+            model.setEndId(endGlobalIndex.toString());
+            model.setBuildId(buildId);
             // 读取的shapeModel中的floor是String这里转换为Integer
             floor = Integer.parseInt(model.getFloor());
 
-            Vertex vertexBegin = new Vertex(startGlobalIndex, model.getBeginId(),
+            Vertex vertexBegin = new Vertex(startGlobalIndex.toString(), buildId,
                     floor, model.getBeginX(), model.getBeginY());
             vertexList.add(vertexBegin);
 
-            Vertex vertexEnd = new Vertex(endGlobalIndex, model.getEndId(),
+            Vertex vertexEnd = new Vertex(endGlobalIndex.toString(), buildId,
                     floor, model.getEndX(), model.getEndY());
             vertexList.add(vertexEnd);
             double diffX = Math.abs(model.getBeginX() - model.getEndX());
             double diffY = Math.abs(model.getBeginY() - model.getEndY());
-            Edge edge = new Edge(startGlobalIndex, endGlobalIndex, Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2)));
+            Edge edge = new Edge(buildId, startGlobalIndex.toString(), endGlobalIndex.toString(),
+                    Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2)));
             edgeList.add(edge);
+            // 每次需要把StringBuilder清空，以备下次使用
+            startGlobalIndex.setLength(0);
+            endGlobalIndex.setLength(0);
         }
         // 有重复的没关系，insert的时候主键一致，数据库应该会自动覆盖
         modelService.saveAll(modelList);
         vertexService.saveAll(vertexList);
         edgeService.saveAll(edgeList);
-        logger.info("成功导入目录下的所有road.shp");
+
+        ArrayList<Double> lonList = new ArrayList<>();
+        ArrayList<Double> latList = new ArrayList<>();
+        for (Vertex vertex : vertexService.findByBuildId(buildId)) {
+            lonList.add(vertex.getX());
+            latList.add(vertex.getY());
+        }
+        Double maxLon = Collections.max(lonList);
+        Double minLon = Collections.min(lonList);
+        Double maxLat = Collections.max(latList);
+        Double minLat = Collections.min(latList);
+
+        boundingBoxService.save(new BoundingBox(buildId, minLon, maxLon, minLat, maxLat));
+        logger.info("成功导入目录下的所有road.shp，并把相关数据处理后入库");
         return "ok";
     }
 
@@ -161,12 +180,14 @@ public class IndoorDataController {
         for (int i = 8; i < 22; i++) {
             String floor = Integer.toString(i);
             String floorUp = Integer.toString(i + 1);
-            changeVertexList.add(new ChangeVertex(floor + "-35", floorUp + "-35", ChangeType.elevator));
-            changeVertexList.add(new ChangeVertex(floor + "-38", floorUp + "-38", ChangeType.elevator));
+            changeVertexList.add(new ChangeVertex("1-" + floor + "-35", "1-" + floorUp + "-35",
+                    ChangeType.elevator, "1"));
+            changeVertexList.add(new ChangeVertex("1-" + floor + "-38", "1-" + floorUp + "-38",
+                    ChangeType.elevator, "1"));
         }
         // 添加建筑物的出入口信息
-        changeVertexList.add(new ChangeVertex("8-2", null, ChangeType.door));
-        changeVertexList.add(new ChangeVertex("8-9", null, ChangeType.door));
+        changeVertexList.add(new ChangeVertex("1-8-2", null, ChangeType.door, "1"));
+        changeVertexList.add(new ChangeVertex("1-8-9", null, ChangeType.door, "1"));
         changeVertexService.saveAll(changeVertexList);
         return "ok";
     }
@@ -178,15 +199,15 @@ public class IndoorDataController {
         // List<Edge> edgeList = edgeService.findByStartIndex(jsonParam.getString("startIndex"));
 //        List<ResultShapeModel> trimModelList = modelService.findAllTrimModel();
 //        return JSON.toJSONString(trimModelList);
-//        LonLat lonLat = MercatorToLonLat.mercatorToLonLat(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
-//        return lonLat.toString();
+        LonLat lonLat = MercatorToLonLat.mercatorToLonLat(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
+        return lonLat.toString();
 //        Mercator mercator = MercatorToLonLat.lonLatToMercator(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
 //        return mercator.toString();
-
-        List<ChangeType> changeTypes = Arrays.asList(ChangeType.elevator, ChangeType.escalator, ChangeType.stairs);
-        for(ChangeVertex cv : changeVertexService.findByChangeTypeIn(changeTypes)) {
-                System.out.println(cv.getChangeType().ordinal());
-        }
-        return "ok";
+//        String buildId = "1";
+//        List<ChangeType> changeTypes = Arrays.asList(ChangeType.elevator, ChangeType.escalator, ChangeType.stairs);
+//        for(ChangeVertex cv : changeVertexService.findByChangeTypeInAndBuildId(changeTypes, buildId)) {
+//                System.out.println(cv.getGlobalIndex());
+//        }
+//        return "ok";
     }
 }

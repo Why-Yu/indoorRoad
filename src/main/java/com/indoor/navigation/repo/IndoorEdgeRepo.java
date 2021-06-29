@@ -10,4 +10,5 @@ import java.util.List;
 public interface IndoorEdgeRepo extends JpaRepository<Edge, Integer> {
     Edge findByEdgeId(int id);
     List<Edge> findByStartIndex(String startIndex);
+    List<Edge> findByBuildId(String buildId);
 }

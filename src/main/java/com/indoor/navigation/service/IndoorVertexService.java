@@ -32,4 +32,8 @@ public class IndoorVertexService {
     public List<Vertex> findAll(){
         return indoorVertexRepo.findAll();
     }
+
+    public List<Vertex> findByBuildId(String buildId) {
+        return indoorVertexRepo.findByBuildId(buildId);
+    }
 }

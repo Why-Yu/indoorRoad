@@ -4,7 +4,7 @@ import javax.persistence.*;
 
 /**
  * @author HaoYu
- * @description shpFile Entity
+ * @description shpFile Entity,解析shapefile得来的
  * the_geom是shp内部存储的地理实体数据转化为字符串
  * @date 2021/05/24
  */
@@ -16,7 +16,7 @@ public class ShapeModel{
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator="modelSeq")
     @SequenceGenerator(name = "modelSeq",initialValue = 1, allocationSize = 1,sequenceName = "modelSeq")
     private Integer modelId;
-    private Integer id;
+    private String buildId;
     private String beginId;
     private Double beginX;
     private Double beginY;
@@ -34,12 +34,12 @@ public class ShapeModel{
         this.modelId = modelId;
     }
 
-    public Integer getId() {
-        return id;
+    public String getBuildId() {
+        return buildId;
     }
 
-    public void setId(Integer id) {
-        this.id = id;
+    public void setBuildId(String buildId) {
+        this.buildId = buildId;
     }
 
     public String getBeginId() {
@@ -110,7 +110,7 @@ public class ShapeModel{
     public String toString() {
         return "ShapeModel{" +
                 "modelId=" + modelId +
-                ", id=" + id +
+                ", buildId='" + buildId + '\'' +
                 ", beginId='" + beginId + '\'' +
                 ", beginX=" + beginX +
                 ", beginY=" + beginY +

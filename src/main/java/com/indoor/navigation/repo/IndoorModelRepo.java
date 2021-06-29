@@ -31,4 +31,5 @@ public interface IndoorModelRepo extends JpaRepository<ShapeModel, Integer> {
             "beginX, beginY, endId, endX, endY, floor) from ShapeModel ")
     List<ResultShapeModel> findAllTrimModel();
 
+    List<ShapeModel> findByBuildId(String buildId);
 }

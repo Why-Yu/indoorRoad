@@ -6,7 +6,7 @@ import javax.persistence.Table;
 
 /**
  * @author HaoYu
- * @description Vertex
+ * @description 存储网络拓扑中的结点信息
  * @date 2021/05/28
  */
 @Entity
@@ -14,16 +14,17 @@ import javax.persistence.Table;
 public class Vertex {
     @Id
     private String globalIndex;
-    private String dataIndex;
+    private String buildId;
     private Integer floor;
     private Double x;
     private Double y;
 
-    public Vertex(){}
+    public Vertex() {
+    }
 
-    public Vertex(String globalIndex, String dataIndex, Integer floor, Double x, Double y) {
+    public Vertex(String globalIndex, String buildId, Integer floor, Double x, Double y) {
         this.globalIndex = globalIndex;
-        this.dataIndex = dataIndex;
+        this.buildId = buildId;
         this.floor = floor;
         this.x = x;
         this.y = y;
@@ -37,12 +38,12 @@ public class Vertex {
         this.globalIndex = globalIndex;
     }
 
-    public String getDataIndex() {
-        return dataIndex;
+    public String getBuildId() {
+        return buildId;
     }
 
-    public void setDataIndex(String dataIndex) {
-        this.dataIndex = dataIndex;
+    public void setBuildId(String buildId) {
+        this.buildId = buildId;
     }
 
     public Integer getFloor() {
@@ -73,8 +74,8 @@ public class Vertex {
     public String toString() {
         return "Vertex{" +
                 "globalIndex='" + globalIndex + '\'' +
-                ", dataIndex='" + dataIndex + '\'' +
-                ", floor='" + floor + '\'' +
+                ", buildId='" + buildId + '\'' +
+                ", floor=" + floor +
                 ", x=" + x +
                 ", y=" + y +
                 '}';

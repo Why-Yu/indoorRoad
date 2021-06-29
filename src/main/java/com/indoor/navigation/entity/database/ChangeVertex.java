@@ -18,12 +18,14 @@ public class ChangeVertex {
     @Enumerated(EnumType.STRING)
     @Column(nullable = true)
     private ChangeType changeType;
+    private String buildId;
 
     public ChangeVertex(){}
-    public ChangeVertex(String globalIndex, String upGlobalIndex, ChangeType changeType) {
+    public ChangeVertex(String globalIndex, String upGlobalIndex, ChangeType changeType, String buildId) {
         this.globalIndex = globalIndex;
         this.upGlobalIndex = upGlobalIndex;
         this.changeType = changeType;
+        this.buildId = buildId;
     }
     public String getGlobalIndex() {
         return globalIndex;
@@ -49,12 +51,21 @@ public class ChangeVertex {
         this.changeType = changeType;
     }
 
+    public String getBuildId() {
+        return buildId;
+    }
+
+    public void setBuildId(String buildId) {
+        this.buildId = buildId;
+    }
+
     @Override
     public String toString() {
         return "ChangeVertex{" +
                 "globalIndex='" + globalIndex + '\'' +
                 ", upGlobalIndex='" + upGlobalIndex + '\'' +
                 ", changeType=" + changeType +
+                ", buildId='" + buildId + '\'' +
                 '}';
     }
 }
