@@ -24,7 +24,6 @@ public class ShapeModel{
     private Double endX;
     private Double endY;
     private String floor;
-    private String the_geom;
 
     public Integer getModelId() {
         return modelId;
@@ -98,14 +97,6 @@ public class ShapeModel{
         this.floor = floor;
     }
 
-    public String getThe_geom() {
-        return the_geom;
-    }
-
-    public void setThe_geom(String the_geom) {
-        this.the_geom = the_geom;
-    }
-
     @Override
     public String toString() {
         return "ShapeModel{" +
@@ -118,7 +109,6 @@ public class ShapeModel{
                 ", endX=" + endX +
                 ", endY=" + endY +
                 ", floor='" + floor + '\'' +
-                ", the_geom='" + the_geom + '\'' +
                 '}';
     }
 }

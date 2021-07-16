@@ -58,7 +58,7 @@ public class ShapeReader {
                     modelList.addAll(models);
                 } else {
                     // 找到具体的road.shp然后读取
-                    if (file.getName().endsWith("road.shp")) {
+                    if (file.getName().endsWith("road.shp") || file.getName().endsWith("roads.shp")) {
                         try {
                             if (folder.getName().endsWith("F")) {
                                 floor = folder.getName().substring(0, folder.getName().length() - 1);
@@ -110,8 +110,8 @@ public class ShapeReader {
             while (iterator.hasNext()) {
                 Property property = iterator.next();
                 //property数据与实体类对应
-                if (property.getName().toString().equals("the_geom"))
-                    model.setThe_geom(property.getValue().toString());
+//                if (property.getName().toString().equals("the_geom"))
+//                    model.setThe_geom(property.getValue().toString());
                 if (property.getName().toString().equals("id"))
                     model.setBuildId(property.getValue().toString());
                 if (property.getName().toString().equals("BeginId"))
@@ -136,12 +136,9 @@ public class ShapeReader {
     }
 
     public static void main(String[] args) {
-//        String path = "F:\\indoorData\\indoorMap";
-//        String path = "null";
-//        ShapeReader shpReader = new ShapeReader();
-//        ArrayList<ShapeModel> resultList = shpReader.readShapeFile(path);
-//        System.out.println(resultList.size());
-
-
+        String path = "E:\\TopoData\\中心百货";
+        ShapeReader shpReader = new ShapeReader();
+        ArrayList<ShapeModel> resultList = shpReader.readShapeFile(path);
+        System.out.println(resultList);
     }
 }

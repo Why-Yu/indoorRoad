@@ -77,9 +77,11 @@ public class IndoorNavController {
 
         Mercator outdoorMercator;
         Mercator indoorMercator;
-        String buildId = "1"; // 室内点落在哪个建筑物的范围内,则buildId就是此建筑物的序号
+        // 室内点落在哪个建筑物的范围内,则buildId就是此建筑物的序号
+        String buildId = "1";
         boolean hasFindBuildId = false;
-        if (paramsNode.isNavFromOut()) { // 从室外到室内
+        // 从室外到室内
+        if (paramsNode.isNavFromOut()) {
             outdoorMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getStartX(), paramsNode.getStartY());
             indoorMercator = MercatorToLonLat.lonLatToMercator(paramsNode.getEndX(), paramsNode.getEndY());
         } else { // 从室内到室外
