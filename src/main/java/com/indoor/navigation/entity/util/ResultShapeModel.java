@@ -7,6 +7,7 @@ package com.indoor.navigation.entity.util;
  */
 public class ResultShapeModel {
     private Integer modelId;
+    private String buildId;
     private String beginId;
     private Double beginX;
     private Double beginY;
@@ -17,8 +18,9 @@ public class ResultShapeModel {
 
     public ResultShapeModel() {}
 
-    public ResultShapeModel(Integer modelId, String beginId, Double beginX, Double beginY, String endId, Double endX, Double endY, String floor) {
+    public ResultShapeModel(Integer modelId, String buildId, String beginId, Double beginX, Double beginY, String endId, Double endX, Double endY, String floor) {
         this.modelId = modelId;
+        this.buildId = buildId;
         this.beginId = beginId;
         this.beginX = beginX;
         this.beginY = beginY;
@@ -34,6 +36,14 @@ public class ResultShapeModel {
 
     public void setModelId(Integer modelId) {
         this.modelId = modelId;
+    }
+
+    public String getBuildId() {
+        return buildId;
+    }
+
+    public void setBuildId(String buildId) {
+        this.buildId = buildId;
     }
 
     public String getBeginId() {

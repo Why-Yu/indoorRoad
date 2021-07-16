@@ -27,7 +27,7 @@ public interface IndoorModelRepo extends JpaRepository<ShapeModel, Integer> {
     List<ResultShapeModel> findAllTrimModel();
     但第一第二种只会传value丢失了key值，主要用一三这两个方法吧，一简便，三不丢key
      */
-    @Query(value = "select new com.indoor.navigation.entity.util.ResultShapeModel(modelId, beginId, " +
+    @Query(value = "select new com.indoor.navigation.entity.util.ResultShapeModel(modelId, buildId, beginId, " +
             "beginX, beginY, endId, endX, endY, floor) from ShapeModel ")
     List<ResultShapeModel> findAllTrimModel();
 

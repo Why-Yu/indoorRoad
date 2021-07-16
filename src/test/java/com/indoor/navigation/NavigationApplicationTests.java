@@ -1,5 +1,6 @@
 package com.indoor.navigation;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.indoor.navigation.controller.IndoorDataController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,8 +24,15 @@ class NavigationApplicationTests {
     }
     @Test
     void testHello() throws Exception{
+        Object randomObj = new Object() {
+            public final String id = "1234";
+        };
+        ObjectMapper objectMapper = new ObjectMapper();
+        String json = objectMapper.writeValueAsString(randomObj);
         mockMvc.perform(MockMvcRequestBuilders
-                .get("/test")
+                .post("/data/test")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json)
                 .accept(MediaType.APPLICATION_JSON))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andDo(MockMvcResultHandlers.print())

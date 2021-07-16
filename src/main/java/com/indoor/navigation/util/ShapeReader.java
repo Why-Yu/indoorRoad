@@ -41,7 +41,7 @@ public class ShapeReader {
                     e.printStackTrace();
                 }
             } else {
-                logger.info("请选择shp文件");
+                logger.info("检测到xlsx文件或是输入了非shp文件");
             }
         } else {
             // 是目录就要考虑三种情况：空目录、父目录、文件目录

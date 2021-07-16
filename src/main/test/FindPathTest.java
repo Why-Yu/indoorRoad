@@ -1,13 +1,10 @@
 import com.indoor.navigation.algorithm.FindPath;
 import com.indoor.navigation.algorithm.StupidFindPath;
-import com.indoor.navigation.algorithm.datastructure.MinHeap;
 import com.indoor.navigation.algorithm.datastructure.Node;
 import com.indoor.navigation.algorithm.datastructure.TopologyNetwork;
 import org.junit.Test;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 public class FindPathTest {
@@ -83,7 +80,7 @@ public class FindPathTest {
         TopologyNetwork network = new TopologyNetwork();
         for (int i = 1; i < floors + 1; i++) {
             for (int j = 0; j < verticesInFloor; j++) {
-                String dataIndex = Integer.toString(i) + "-" + Integer.toString(j);
+                String dataIndex = "1-" + Integer.toString(i) + "-" + Integer.toString(j);
                 network.insertVertex(dataIndex, i, Math.random() * 100, Math.random() * 100);
             }
         }
@@ -91,17 +88,17 @@ public class FindPathTest {
         Random rm = new Random();
         for (int i = 1; i < floors + 1; i++) {
             for (int j = 0; j < verticesInFloor; j++) {
-                String dataIndexFrom = Integer.toString(i) + "-" + Integer.toString(j);
+                String dataIndexFrom = "1-" + Integer.toString(i) + "-" + Integer.toString(j);
                 for (int k = 0; k < 3; k++) {  //修改这个参数，理论上能使路径更加长，每一步可选的路径减少
-                    String dataIndexTo = Integer.toString(i) + "-" + Integer.toString(rm.nextInt(verticesInFloor));
+                    String dataIndexTo = "1-" + Integer.toString(i) + "-" + Integer.toString(rm.nextInt(verticesInFloor));
                     network.insertEdge(dataIndexFrom, dataIndexTo, Math.random() * 10);
                 }
             }
         }
 
         for (int i = 1; i < floors + 1; i++) {
-            String dataIndexFrom = Integer.toString(i) + "-0";
-            String dataIndexTo = Integer.toString(i + 1) + "-0";
+            String dataIndexFrom = "1-" + Integer.toString(i) + "-0";
+            String dataIndexTo = "1-" + Integer.toString(i + 1) + "-0";
             network.insertEdge(dataIndexFrom, dataIndexTo, 5);
         }
 
