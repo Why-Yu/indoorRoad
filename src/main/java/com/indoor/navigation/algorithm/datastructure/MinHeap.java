@@ -23,7 +23,7 @@ public class MinHeap<E extends Node> implements Heap<E>{
         minHeap.add(create(type));
     }
     
-    private List<E> minHeap;
+    private final List<E> minHeap;
     private final Class<E> type;
 
     private E create(Class<E> type){
@@ -116,5 +116,9 @@ public class MinHeap<E extends Node> implements Heap<E>{
 
     public E get(int i){
         return minHeap.get(i);
+    }
+
+    public int size() {
+        return minHeap.size() - 1;
     }
 }

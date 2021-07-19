@@ -2,6 +2,7 @@ package com.indoor.navigation.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.indoor.navigation.algorithm.FindPath;
+import com.indoor.navigation.algorithm.datastructure.MinHeap;
 import com.indoor.navigation.algorithm.datastructure.Node;
 import com.indoor.navigation.algorithm.datastructure.TopologyNetwork;
 import com.indoor.navigation.entity.database.BoundingBox;
@@ -118,24 +119,28 @@ public class IndoorNavController {
         // 导入室内拓扑网络
         findPath.changeNetwork(network);
 
-        Vertex doorVertex = findDoorVertex(outdoorMercator, buildId);
-        if (paramsNode.isNavFromOut()) {
-            // 从室外到室内
-            // 最后返回的路径是从后追溯到前的，所以这里反过来注入，最后返回的路径就是正确顺序的
-            findPath.setStartNode(paramsNode.getEndFloor(), indoorMercator.getX(), indoorMercator.getY());
-            findPath.setEndNode(paramsNode.getStartFloor(), doorVertex.getX(), doorVertex.getY());
-        } else {
-            // 从室内到室外
-            findPath.setStartNode(paramsNode.getEndFloor(), doorVertex.getX(), doorVertex.getY());
-            findPath.setEndNode(paramsNode.getStartFloor(), indoorMercator.getX(), indoorMercator.getY());
+        List<Node> pathList = new ArrayList<>();
+        MinHeap<Node> minHeap = findDoorVertex(outdoorMercator, buildId);
+        while (pathList.isEmpty() && minHeap.size() > 0) {
+            Node doorNode = minHeap.delMin();
+            if (paramsNode.isNavFromOut()) {
+                // 从室外到室内
+                // 最后返回的路径是从后追溯到前的，所以这里反过来注入，最后返回的路径就是正确顺序的
+                findPath.setStartNode(paramsNode.getEndFloor(), indoorMercator.getX(), indoorMercator.getY());
+                findPath.setEndNode(paramsNode.getStartFloor(), doorNode.x, doorNode.y);
+            } else {
+                // 从室内到室外
+                findPath.setStartNode(paramsNode.getEndFloor(), doorNode.x, doorNode.y);
+                findPath.setEndNode(paramsNode.getStartFloor(), indoorMercator.getX(), indoorMercator.getY());
+            }
+            pathList = findPath.getShortestPath();
+            findPath.refresh();
         }
-
-        List<Node> pathList = findPath.getShortestPath();
         // 对最短路径进行分段，并添加信息
-        ArrayList<WrapResultNode> wrapResultNodes = new ArrayList<>();
-        if (!pathList.isEmpty()) {
-            wrapResultNodes = splitPath(pathList);
+        if (pathList.isEmpty() && minHeap.size() == 0) {
+            return "{\"message\": \"输入的室内点应该是孤立点，故无法找到路径\"}";
         }
+        ArrayList<WrapResultNode> wrapResultNodes = splitPath(pathList);
 
         logger.info("成功获得室内最短路径");
         return JSON.toJSONString(wrapResultNodes);
@@ -188,6 +193,9 @@ public class IndoorNavController {
         findPath.setEndNode(paramsNode.getStartFloor(), startMercator.getX(), startMercator.getY());
 
         List<Node> pathList = findPath.getShortestPath();
+        if (pathList.isEmpty()) {
+            return "{\"message\":\"输入的起始点或者终止点是一个孤立点\"}";
+        }
         ArrayList<WrapResultNode> wrapResultNodes = splitPath(pathList);
 
         logger.info("成功获得纯室内最短路径");
@@ -195,27 +203,25 @@ public class IndoorNavController {
     }
 
     /**
-     * description: 寻找室内外的转换点，这里直接选择离室外目标最近的那个门 <br>
+     * description: 寻找室内外的转换点，这里选择离室外目标尽可能近但又同时能抵达目的地的那个门 <br>
      * date: 2021/6/23 17:46 <br>
      * author: HaoYu <br>
      * @param mercator
      * @return com.indoor.navigation.entity.database.Vertex
      */ 
-    private Vertex findDoorVertex(Mercator mercator, String buildId) {
-        Vertex doorVertex = new Vertex();
+    private MinHeap<Node> findDoorVertex(Mercator mercator, String buildId) {
+        MinHeap<Node> minHeap = new MinHeap<>(Node.class);
         Vertex tempDoorVertex;
-        double tempMin = Double.MAX_VALUE;
         double absolute;
         List<ChangeType> changeTypes = Collections.singletonList(ChangeType.door);
         for (ChangeVertex cv : changeVertexService.findByChangeTypeInAndBuildId(changeTypes, buildId)) {
             tempDoorVertex = vertexService.findByGlobalIndex(cv.getGlobalIndex());
             absolute = Math.abs(mercator.getX() - tempDoorVertex.getX()) + Math.abs(mercator.getY() - tempDoorVertex.getY());
-            if (absolute <= tempMin) {
-                tempMin = absolute;
-                doorVertex = tempDoorVertex;
-            }
+            Node tempNode = new Node(cv.getGlobalIndex(), 1, tempDoorVertex.getX(), tempDoorVertex.getY(), absolute);
+            tempNode.total = absolute;
+            minHeap.add(tempNode);
         }
-        return doorVertex;
+        return minHeap;
     }
     
     private ArrayList<WrapResultNode> splitPath(List<Node> pathList) {

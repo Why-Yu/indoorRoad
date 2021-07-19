@@ -2,10 +2,11 @@ package com.indoor.navigation.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.indoor.navigation.entity.database.*;
+import com.indoor.navigation.entity.util.LonLat;
 import com.indoor.navigation.entity.util.ResultShapeModel;
 import com.indoor.navigation.service.*;
-import com.indoor.navigation.util.ChangeType;
 import com.indoor.navigation.util.ExcelReader;
+import com.indoor.navigation.util.MercatorToLonLat;
 import com.indoor.navigation.util.ShapeReader;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -205,19 +206,19 @@ public class IndoorDataController {
     @CrossOrigin
     public String saveExtra(@RequestBody List<ChangeVertex> changeVertexList) {
         // 添加楼层之间的额外边缘
-        for (int i = 8; i < 22; i++) {
-            String floor = Integer.toString(i);
-            String floorUp = Integer.toString(i + 1);
-            changeVertexList.add(new ChangeVertex("1-" + floor + "-35", "1-" + floorUp + "-35",
-                    ChangeType.elevator, "1"));
-            changeVertexList.add(new ChangeVertex("1-" + floor + "-38", "1-" + floorUp + "-38",
-                    ChangeType.elevator, "1"));
-        }
-        // 添加建筑物的出入口信息
-        changeVertexList.add(new ChangeVertex("1-8-2", null, ChangeType.door, "1"));
-        changeVertexList.add(new ChangeVertex("1-8-9", null, ChangeType.door, "1"));
-        changeVertexService.saveAll(changeVertexList);
-        return "ok";
+//        for (int i = 8; i < 22; i++) {
+//            String floor = Integer.toString(i);
+//            String floorUp = Integer.toString(i + 1);
+//            changeVertexList.add(new ChangeVertex("1-" + floor + "-35", "1-" + floorUp + "-35",
+//                    ChangeType.elevator, "1"));
+//            changeVertexList.add(new ChangeVertex("1-" + floor + "-38", "1-" + floorUp + "-38",
+//                    ChangeType.elevator, "1"));
+//        }
+//        // 添加建筑物的出入口信息
+//        changeVertexList.add(new ChangeVertex("1-8-2", null, ChangeType.door, "1"));
+//        changeVertexList.add(new ChangeVertex("1-8-9", null, ChangeType.door, "1"));
+//        changeVertexService.saveAll(changeVertexList);
+        return "接口已废弃，无需调用";
     }
 
     @ApiOperation("测试接口，测试部分功能时使用")
@@ -227,8 +228,8 @@ public class IndoorDataController {
         // List<Edge> edgeList = edgeService.findByStartIndex(jsonParam.getString("startIndex"));
 //        List<ResultShapeModel> trimModelList = modelService.findAllTrimModel();
 //        return JSON.toJSONString(trimModelList);
-//        LonLat lonLat = MercatorToLonLat.mercatorToLonLat(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
-//        return lonLat.toString();
+        LonLat lonLat = MercatorToLonLat.mercatorToLonLat(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
+        return lonLat.toString();
 //        Mercator mercator = MercatorToLonLat.lonLatToMercator(jsonParam.getDouble("x"), jsonParam.getDouble("y"));
 //        return mercator.toString();
 //        String buildId = "1";
@@ -236,6 +237,6 @@ public class IndoorDataController {
 //        for(ChangeVertex cv : changeVertexService.findByChangeTypeInAndBuildId(changeTypes, buildId)) {
 //                System.out.println(cv.getGlobalIndex());
 //        }
-        return "ok";
+//        return "ok";
     }
 }

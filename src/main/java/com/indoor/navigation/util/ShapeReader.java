@@ -68,6 +68,11 @@ public class ShapeReader {
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
+                    } else if (file.getName().endsWith(".xlsx")) {
+                    } else {
+                        if (!file.getName().contains("road")) {
+                            file.delete();
+                        }
                     }
                 }
             }

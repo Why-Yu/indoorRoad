@@ -31,8 +31,8 @@ public class FindPath {
     private double basicsH;
 
     public FindPath(){
-        openMap = new HashMap<>(50);
-        closeMap = new HashMap<>();
+        openMap = new HashMap<>(100);
+        closeMap = new HashMap<>(100);
         minHeap = new MinHeap<>(Node.class);
     }
 
@@ -50,6 +50,12 @@ public class FindPath {
 
     public void setEndNode(int floor, double x, double y){
         this.endNode = network.findNearNode(floor, x, y);
+    }
+
+    public void refresh() {
+        openMap = new HashMap<>(100);
+        closeMap = new HashMap<>(100);
+        minHeap = new MinHeap<>(Node.class);
     }
 
     /**
@@ -106,7 +112,7 @@ public class FindPath {
                 closeMap.put(currentNode.dataIndex, currentNode);
                 openMap.remove(currentNode.dataIndex);
             }else {
-                return null;
+                return new ArrayList<>();
             }
         }
         List<Node> resultList = new ArrayList<>();
