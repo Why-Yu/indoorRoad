@@ -25,7 +25,8 @@ class NavigationApplicationTests {
     @Test
     void testHello() throws Exception{
         Object randomObj = new Object() {
-            public final String id = "1234";
+            public final Double x = 12722082.54;
+            public final Double y = 3578787.21;
         };
         ObjectMapper objectMapper = new ObjectMapper();
         String json = objectMapper.writeValueAsString(randomObj);
