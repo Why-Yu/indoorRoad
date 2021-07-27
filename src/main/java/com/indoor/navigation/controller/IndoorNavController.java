@@ -108,7 +108,8 @@ public class IndoorNavController {
         for (Edge edge : edgeService.findByBuildId(buildId)) {
             network.insertEdge(edge.getStartIndex(), edge.getEndIndex(), edge.getWeight());
         }
-        // ******层与层之间的联通关系现在只能通过saveExtra接口手动添加
+        // ******层与层之间的联通关系，在change_vertex表中只存储了向上的部分
+        // 又由于此，导致wrapPath时，处于最顶层的那个转换节点没有记录，就很尴尬
         List<ChangeType> changeTypes = Arrays.asList(ChangeType.elevator, ChangeType.escalator, ChangeType.stairs);
         for (ChangeVertex cv : changeVertexService.findByChangeTypeInAndBuildId(changeTypes, buildId)) {
             if (cv.getUpGlobalIndex() != null) {
@@ -140,7 +141,7 @@ public class IndoorNavController {
         if (pathList.isEmpty() && minHeap.size() == 0) {
             return "{\"message\": \"输入的室内点应该是孤立点，故无法找到路径\"}";
         }
-        ArrayList<WrapResultNode> wrapResultNodes = splitPath(pathList);
+        ArrayList<WrapResultNode> wrapResultNodes = wrapPath(pathList, paramsNode.isNavFromOut());
 
         logger.info("成功获得室内最短路径");
         return JSON.toJSONString(wrapResultNodes);
@@ -170,14 +171,14 @@ public class IndoorNavController {
             logger.info("输入的室内坐标对应不上数据库中的任何一个建筑物范围");
             return "室内坐标无法对应到建筑物";
         }
-        // !!!!!! 其实使用一张shape_model表就好了，不需要两张表，不知道当初怎么想的，但暂时先不改吧
+
         for (Vertex vertex : vertexService.findByBuildId(buildId)) {
             network.insertVertex(vertex.getGlobalIndex(), vertex.getFloor(), vertex.getX(), vertex.getY());
         }
         for (Edge edge : edgeService.findByBuildId(buildId)) {
             network.insertEdge(edge.getStartIndex(), edge.getEndIndex(), edge.getWeight());
         }
-        // ******层与层之间的联通关系现在只能通过saveExtra接口手动添加
+
         List<ChangeType> changeTypes = Arrays.asList(ChangeType.elevator, ChangeType.escalator, ChangeType.stairs);
         for (ChangeVertex cv : changeVertexService.findByChangeTypeInAndBuildId(changeTypes, buildId)) {
             if (cv.getUpGlobalIndex() != null) {
@@ -196,7 +197,7 @@ public class IndoorNavController {
         if (pathList.isEmpty()) {
             return "{\"message\":\"输入的起始点或者终止点是一个孤立点\"}";
         }
-        ArrayList<WrapResultNode> wrapResultNodes = splitPath(pathList);
+        ArrayList<WrapResultNode> wrapResultNodes = wrapPath(pathList, paramsNode.isNavFromOut());
 
         logger.info("成功获得纯室内最短路径");
         return JSON.toJSONString(wrapResultNodes);
@@ -206,9 +207,10 @@ public class IndoorNavController {
      * description: 寻找室内外的转换点，这里选择离室外目标尽可能近但又同时能抵达目的地的那个门 <br>
      * date: 2021/6/23 17:46 <br>
      * author: HaoYu <br>
-     * @param mercator
+     *
+     * @param mercator 墨卡托坐标
      * @return com.indoor.navigation.entity.database.Vertex
-     */ 
+     */
     private MinHeap<Node> findDoorVertex(Mercator mercator, String buildId) {
         MinHeap<Node> minHeap = new MinHeap<>(Node.class);
         Vertex tempDoorVertex;
@@ -223,7 +225,8 @@ public class IndoorNavController {
         }
         return minHeap;
     }
-    
+
+    @Deprecated
     private ArrayList<WrapResultNode> splitPath(List<Node> pathList) {
         // 必须用List这样能保证输出结果的顺序的正确
         ArrayList<WrapResultNode> wrapResultNodes = new ArrayList<>();
@@ -269,5 +272,85 @@ public class IndoorNavController {
             }
         }
         return wrapResultNodes;
+    }
+
+    private ArrayList<WrapResultNode> wrapPath(List<Node> pathList, boolean navFromOut) {
+        ArrayList<WrapResultNode> wrapResultNodes = new ArrayList<>();
+        int currentFloor = pathList.get(0).floor;
+        LonLat lonLat;
+        String toIndex;
+        ChangeVertex cv;
+        String currentChange;
+
+        wrapResultNodes.add(new WrapResultNode());
+        WrapResultNode wrapResultNode = wrapResultNodes.get(wrapResultNodes.size() - 1);
+        wrapResultNode.setFloor(currentFloor);
+        cv = changeVertexService.findByGlobalIndex(pathList.get(0).dataIndex);
+        wrapResultNode.addMessage(messageBuilder("from:", cv, pathList.get(0).dataIndex) + ";");
+
+        for (Node pathNode : pathList) {
+            lonLat = MercatorToLonLat.mercatorToLonLat(pathNode.x, pathNode.y);
+            if (pathNode.floor != currentFloor) {
+                // 先对上一层的末尾进行处理
+                toIndex = wrapResultNode.getResultNodes().get(wrapResultNode.getResultNodes().size() - 1).getDataIndex();
+                cv = changeVertexService.findByGlobalIndex(toIndex);
+                wrapResultNode.addMessage(messageBuilder("to:", cv, toIndex));
+                // 然后再对下一层楼开头
+                wrapResultNodes.add(new WrapResultNode());
+                wrapResultNode = wrapResultNodes.get(wrapResultNodes.size() - 1);
+                wrapResultNode.setFloor(pathNode.floor);
+                cv = changeVertexService.findByGlobalIndex(pathNode.dataIndex);
+                wrapResultNode.addMessage(messageBuilder("from:", cv,  pathNode.dataIndex) + ";");
+                // 更新currentFloor
+                currentFloor = pathNode.floor;
+            }
+            wrapResultNode.getResultNodes().add(
+                    new ResultNode(pathNode.dataIndex, pathNode.floor, lonLat.getLon(), lonLat.getLat()));
+        }
+
+        toIndex = wrapResultNode.getResultNodes().get(wrapResultNode.getResultNodes().size() - 1).getDataIndex();
+        cv = changeVertexService.findByGlobalIndex(toIndex);
+        wrapResultNode.addMessage(messageBuilder("to:", cv,  toIndex));
+
+        //*** 这一块代码的目的是解决建筑物最顶层数据的转换点缺失，导致只能输出normal的问题(只当路径经过最顶层才会出现)
+        //*** 所以在这里依据navFromOut强制重新把顶层到次顶层的那个message修改一下(但要注意路径起码要经过两层)
+        if (wrapResultNodes.size() > 1) {
+            if (navFromOut) {
+                wrapResultNode = wrapResultNodes.get(wrapResultNodes.size() - 2);
+                String message = wrapResultNode.getMessage();
+                currentChange = message.substring(message.lastIndexOf(":"), message.lastIndexOf("|"));
+
+                wrapResultNode = wrapResultNodes.get(wrapResultNodes.size() - 1);
+                StringBuilder builder = new StringBuilder(wrapResultNode.getMessage());
+                builder.replace(builder.indexOf(":"), builder.indexOf("|"), currentChange);
+                wrapResultNode.setMessage(builder.toString());
+
+            } else {
+                wrapResultNode = wrapResultNodes.get(1);
+                String message = wrapResultNode.getMessage();
+                currentChange = message.substring(message.indexOf(":"), message.indexOf("|"));
+
+                wrapResultNode = wrapResultNodes.get(0);
+                StringBuilder builder = new StringBuilder(wrapResultNode.getMessage());
+                builder.replace(builder.lastIndexOf(":"), builder.lastIndexOf("|"), currentChange);
+                wrapResultNode.setMessage(builder.toString());
+            }
+        }
+        return wrapResultNodes;
+    }
+
+    private String messageBuilder(String direction, ChangeVertex cv, String dataIndex) {
+        StringBuilder builder = new StringBuilder();
+        if (cv != null) {
+            builder.append(direction)
+                    .append(cv.getChangeType().toString())
+                    .append("|")
+                    .append(dataIndex);
+        } else {
+            builder.append(direction)
+                    .append("normal|")
+                    .append(dataIndex);
+        }
+        return builder.toString();
     }
 }
