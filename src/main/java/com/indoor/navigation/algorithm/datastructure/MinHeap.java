@@ -102,10 +102,8 @@ public class MinHeap<E extends Node> implements Heap<E>{
         StringBuilder result = new StringBuilder();
         Iterator<E> iterator= minHeap.iterator();
         int i = 1;
+        iterator.next();
         while(iterator.hasNext()){
-            if(i == 1){
-                iterator.next();
-            }
             result.append(i++);
             result.append(":");
             result.append(iterator.next().total);
