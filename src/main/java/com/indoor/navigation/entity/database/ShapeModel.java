@@ -25,6 +25,20 @@ public class ShapeModel{
     private Double endY;
     private String floor;
 
+    public ShapeModel() {
+    }
+
+    public ShapeModel(String buildId, String beginId, Double beginX, Double beginY, String endId, Double endX, Double endY, String floor) {
+        this.buildId = buildId;
+        this.beginId = beginId;
+        this.beginX = beginX;
+        this.beginY = beginY;
+        this.endId = endId;
+        this.endX = endX;
+        this.endY = endY;
+        this.floor = floor;
+    }
+
     public Integer getModelId() {
         return modelId;
     }

@@ -7,7 +7,6 @@ import org.geotools.data.FeatureSource;
 import org.geotools.data.shapefile.ShapefileDataStore;
 import org.geotools.feature.FeatureCollection;
 import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.Property;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.slf4j.Logger;
@@ -16,7 +15,9 @@ import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author HaoYu
@@ -110,32 +111,21 @@ public class ShapeReader {
         FeatureIterator<SimpleFeature> features = collection.features();
         while (features.hasNext()) {
             SimpleFeature feature = features.next();
-            ShapeModel model = new ShapeModel();
-            Iterator<? extends Property> iterator = feature.getValue().iterator();
-            while (iterator.hasNext()) {
-                Property property = iterator.next();
-                //property数据与实体类对应
-//                if (property.getName().toString().equals("the_geom"))
-//                    model.setThe_geom(property.getValue().toString());
-                if (property.getName().toString().equals("id"))
-                    model.setBuildId(property.getValue().toString());
-                if (property.getName().toString().equals("BeginId"))
-                    model.setBeginId(property.getValue().toString());
-                if (property.getName().toString().equals("BeginX"))
-                    model.setBeginX(Double.parseDouble(property.getValue().toString()));
-                if (property.getName().toString().equals("BeginY"))
-                    model.setBeginY(Double.parseDouble(property.getValue().toString()));
-                if (property.getName().toString().equals("EndId"))
-                    model.setEndId(property.getValue().toString());
-                if (property.getName().toString().equals("EndX"))
-                    model.setEndX(Double.parseDouble(property.getValue().toString()));
-                if (property.getName().toString().equals("EndY"))
-                    model.setEndY(Double.parseDouble(property.getValue().toString()));
-                model.setFloor(floor);
-            }
+            ShapeModel model = new ShapeModel(
+                    feature.getAttribute("id").toString(),
+                    feature.getAttribute("BeginId").toString(),
+                    Double.parseDouble(feature.getAttribute("BeginX").toString()),
+                    Double.parseDouble(feature.getAttribute("BeginY").toString()),
+                    feature.getAttribute("EndId").toString(),
+                    Double.parseDouble(feature.getAttribute("EndX").toString()),
+                    Double.parseDouble(feature.getAttribute("EndY").toString()),
+                    floor
+            );
             models.add(model);
         }
-        // 关闭dataStore,防止之后再读取，出现The following locker still has a lock: read on file错误
+        // 关闭FeatureIterator以及DataStore,防止之后再读取，出现The following locker still has a lock: read on file错误
+        // 这里两个都需要关闭，之前有一个未关闭会报错
+        features.close();
         dataStore.dispose();
         return models;
     }
